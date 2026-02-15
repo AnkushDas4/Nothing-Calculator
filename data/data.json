@@ -1,0 +1,7 @@
+{
+    "Byte": 1,
+    "Kilobyte": 1024,
+    "Megabyte": 1048576,
+    "Gigabyte": 1073741824,
+    "Terabyte": 1099511627776
+}
