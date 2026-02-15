@@ -1,0 +1,381 @@
+/* --- 1. Root Variables & Font --- */
+@font-face {
+  font-family: 'Font';
+  src: url('font.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+:root {
+    /* Dark Mode (Default Nothing Style) */
+    --color-bg: #000000;
+    --color-bg-container: #000000;
+    --color-text-primary: #FFFFFF;
+    --color-text-secondary: #AAAAAA;
+    --color-border: #333333;
+    --color-input-bg: #191919;
+    --color-accent: #FF0000; /* Red for active nav */
+    --color-button-bg: #1e1e1e;
+    --color-button-text: #FFFFFF;
+}
+
+[data-theme="light"] {
+    /* Light Mode */
+    --color-bg: #F5F5F5;
+    --color-bg-container: #F5F5F5;
+    --color-text-primary: #000000;
+    --color-text-secondary: #555555;
+    --color-border: #DDDDDD;
+    --color-input-bg: #EAEAEA;
+    --color-accent: #FF0000;
+    --color-button-bg: #FFFFFF;
+    --color-button-text: #000000;
+}
+
+/* --- GLOBAL RESET & SELECTION RULES --- */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    /* Disable text selection on everything... */
+    -webkit-user-select: none; /* Chrome/Safari */
+    -moz-user-select: none;    /* Firefox */
+    -ms-user-select: none;     /* IE/Edge */
+    user-select: none;         /* Standard */
+}
+
+/* ...Except for input boxes, so users can type/edit */
+input {
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+    user-select: text;
+}
+
+body {
+    font-family: 'Font', 'Courier New', Courier, monospace;
+    background-color: var(--color-bg);
+    color: var(--color-text-primary);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    font-size: 1.2rem;
+}
+
+/* --- 2. App Layout --- */
+.app-container {
+    width: 100%;
+    max-width: 400px;
+    height: 650px; 
+    max-height: calc(100vh - 40px); 
+    background-color: var(--color-bg-container);
+    border: 0;
+    border-radius: 24px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+/* --- 3. Header --- */
+header {
+    padding: 16px 16px 10px 16px; 
+    display: flex; 
+    flex-direction: column; 
+    gap: 10px; 
+    flex-shrink: 0;
+}
+
+.header-top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.header-main {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+header h1 {
+    color: var(--color-text-primary);
+    font-size: 1.75rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-weight: normal;
+}
+
+.icon-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    color: var(--color-text-primary); 
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    -webkit-tap-highlight-color: transparent;
+}
+.icon-btn svg {
+    width: 28px;
+    height: 28px;
+    fill: var(--color-text-secondary);
+    stroke: var(--color-text-secondary);
+    transition: all 0.2s ease;
+}
+.icon-btn:hover svg {
+    fill: var(--color-text-primary);
+    stroke: var(--color-text-primary);
+}
+
+/* --- 4. Navigation --- */
+nav {
+    width: 100%;
+    overflow-x: auto;
+    background-color: var(--color-bg-container);
+    border-bottom: 1px solid var(--color-border);
+    flex-shrink: 0;
+}
+nav::-webkit-scrollbar { display: none; }
+nav { -ms-overflow-style: none; scrollbar-width: none; }
+
+nav ul {
+    display: flex;
+    list-style: none;
+    padding: 0 10px;
+}
+nav li {
+    flex-shrink: 0;
+    -webkit-tap-highlight-color: transparent;
+}
+nav a {
+    position: relative; 
+    display: block;
+    padding: 14px 14px;
+    margin: 0 2px;
+    text-decoration: none;
+    color: var(--color-text-secondary);
+    font-size: 1.1rem;
+    text-transform: uppercase;
+    transition: all 0.2s ease;
+    border-radius: 8px;
+}
+nav a:hover {
+    color: var(--color-text-primary);
+    background-color: var(--color-input-bg);
+}
+nav a.active {
+    color: var(--color-accent);
+    font-weight: normal;
+    background-color: transparent;
+}
+
+nav a::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 3px;
+    background-color: var(--color-accent);
+    transition: width 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+nav a.active::after {
+    width: 100%;
+}
+
+/* --- 5. Main Content --- */
+main {
+    flex-grow: 1;
+    padding: 16px 20px; 
+    overflow-y: auto;
+    min-height: 0; 
+}
+
+.converter-group {
+    margin-bottom: 16px;
+}
+.converter-group.input-group {
+    margin-bottom: 16px; 
+}
+
+label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 1.1rem;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+}
+
+input[type="number"],
+select {
+    width: 100%;
+    padding: 20px 20px; 
+    background-color: var(--color-input-bg);
+    border: 0;
+    border-radius: 999px; /* Fully rounded */
+    color: var(--color-text-primary);
+    font-family: 'Font', 'Courier New', Courier, monospace;
+    font-size: 1.1rem;
+    -moz-appearance: textfield;
+    appearance: none;
+}
+/* Custom select arrow */
+select {
+    background-image: linear-gradient(45deg, transparent 50%, var(--color-text-secondary) 50%),
+                      linear-gradient(135deg, var(--color-text-secondary) 50%, transparent 50%);
+    background-position: calc(100% - 25px) center, 
+                         calc(100% - 20px) center;
+    background-size: 5px 5px, 5px 5px;
+    background-repeat: no-repeat;
+    padding-right: 40px;
+}
+
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+input[type="number"]:focus,
+select:focus {
+    outline: none;
+}
+
+/* --- 6. Swap Button & From/To Wrapper --- */
+.conversion-wrapper {
+    position: relative;
+    padding-right: 84px; 
+    margin-bottom: 16px; 
+}
+
+#from-group {
+    margin-bottom: 16px; 
+}
+
+#to-group {
+    margin-bottom: 0;
+}
+
+.swap-btn {
+    position: absolute;
+    right: 0;
+    top: 55%; 
+    transform: translateY(-50%);
+    width: 64px;
+    height: 64px;
+    cursor: pointer;
+    background-color: var(--color-accent);
+    color: var(--color-button-text); 
+    border: 0;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+.swap-btn:hover {
+    background-color: var(--color-accent);
+}
+[data-theme="light"] .swap-btn:hover {
+     background-color: var(--color-accent);
+}
+
+.swap-btn svg {
+    width: 32px; 
+    height: 32px; 
+    stroke: var(--color-button-text); 
+    stroke-width: 2.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    overflow: visible; 
+}
+
+/* --- 360 Animation --- */
+@keyframes spin-360 {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.swap-btn.animating svg {
+    animation: spin-360 0.4s ease-in-out;
+}
+
+/* --- 7. Result Box --- */
+.result-box {
+    margin-top: 16px;
+    padding: 10px 20px; 
+    background-color: transparent;
+    border: 0;
+    border-radius: 0;
+    text-align: center;
+    word-wrap: break-word;
+}
+.result-box p {
+    color: var(--color-text-primary);
+    font-size: 2.75rem; 
+    font-weight: normal;
+    letter-spacing: 2px;
+}
+
+/* --- 8. Page Content & Notes --- */
+.page-content {
+    display: none;
+}
+.page-content.active {
+    display: block;
+}
+
+.note {
+    font-size: 1rem;
+    color: var(--color-text-secondary);
+    padding: 15px;
+    background-color: var(--color-input-bg);
+    border: 0;
+    border-radius: 12px;
+    margin-top: 18px; 
+    text-align: center;
+}
+/* --- PAGE TRANSITION ANIMATIONS --- */
+
+/* Base state for Body */
+body {
+    /* Performance optimization */
+    will-change: transform, opacity;
+    /* The "Zero" state (Centered and Visible) */
+    transform: translateX(0);
+    opacity: 1;
+    /* Snappy Nothing OS easing */
+    transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.4s ease;
+}
+
+/* 1. SLIDE OUT ANIMATIONS (Leaving the page) */
+.slide-out-left {
+    transform: translateX(-20vw) !important; /* Move left */
+    opacity: 0 !important;
+}
+
+.slide-out-right {
+    transform: translateX(20vw) !important; /* Move right */
+    opacity: 0 !important;
+}
+
+/* 2. PREPARE SLIDE IN (Initial State before JS loads) */
+/* These classes exist on <body> when the HTML first loads */
+
+.prepare-slide-in-right {
+    transform: translateX(20vw) !important; /* Start from right */
+    opacity: 0 !important;
+}
+
+.prepare-slide-in-left {
+    transform: translateX(-20vw) !important; /* Start from left */
+    opacity: 0 !important;
+}

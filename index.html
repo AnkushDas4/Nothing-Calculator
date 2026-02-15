@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"/>
+ <script src="math.js"></script>
+  <title>Nothing OS Calculator</title>
+  <style>
+    /* --- CORE VARIABLES & THEME SETUP --- */
+    :root {
+      --bg-color: #000000;
+      --text-color: #ffffff;
+      --display-bg: #000000;
+      --btn-bg: #222222;
+      --btn-text: #ffffff;
+      --btn-gray: #333333;
+      --accent-color: #d32f2f;
+      --accent-active: #a62828;
+      --overlay-bg: #1a1a1a;
+      --border-color: #333;
+    }
+
+    [data-theme="light"] {
+      --bg-color: #e6e6e6;
+      --text-color: #000000;
+      --display-bg: #e6e6e6;
+      --btn-bg: #ffffff;
+      --btn-text: #000000;
+      --btn-gray: #bbbbbb;
+      --accent-color: #d32f2f;
+      --accent-active: #b71c1c;
+      --overlay-bg: #f0f0f0;
+      --border-color: #ccc;
+    }
+
+    @font-face {
+      font-family: 'Nothing';
+      src: url('font.otf') format('truetype');
+      font-display: swap; 
+    }
+
+    /* --- GLOBAL STYLES --- */
+    ::-webkit-scrollbar { display: none; }
+    
+    html, body {
+      position: fixed; 
+      overflow: hidden;
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      background: var(--bg-color);
+      color: var(--text-color);
+      font-family: 'Nothing', sans-serif;
+      
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: none;
+      
+      will-change: transform, opacity;
+      transform: translateX(0);
+      opacity: 1;
+      transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.4s ease, background 0.3s, color 0.3s;
+    }
+
+    .calculator {
+      width: 100%;
+      height: 100%;
+      max-width: 450px;
+      margin: 0 auto; 
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between; 
+      padding-bottom: 20px; 
+      box-sizing: border-box;
+      position: relative;
+    }
+
+    /* --- DISPLAY AREA --- */
+    .display-container {
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 20px 25px;
+      min-height: 120px;
+    }
+
+    .display {
+      width: 100%;
+      background: transparent;
+      border: none;
+      outline: none; 
+      
+      font-family: 'Nothing', sans-serif;
+      font-size: 3.5em; 
+      text-align: right;
+      color: var(--text-color);
+      line-height: 100%; 
+      height: 1.0em;
+      padding: 0;
+      margin-bottom: 5px;
+      vertical-align: middle;
+      border-bottom: 2px dotted var(--border-color);
+      transition: color 0.3s;
+      caret-color: var(--accent-color); 
+      white-space: nowrap;
+      overflow-x: auto;
+    }
+
+    /* --- TOP ICONS --- */
+    .top-buttons {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      display: flex;
+      gap: 15px;  
+      z-index: 10;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .icon-btn {
+      background: transparent;
+      border: none;
+      padding: 5px;
+      cursor: pointer;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .icon-btn:active {
+      background: rgba(128, 128, 128, 0.2);
+    }
+
+    .icon-btn svg {
+      width: 28px;
+      height: 28px;
+      fill: var(--text-color);
+      transition: fill 0.3s;
+    }
+
+    /* --- KEYPAD --- */
+    .buttons {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      padding: 0 20px;
+      justify-items: center;
+      width: 100%;
+      box-sizing: border-box;
+      margin-bottom: 10px; 
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+
+    .btn {
+      width: 100%; 
+      height: auto;
+      aspect-ratio: 1 / 1; 
+      max-width: 75px; 
+      
+      font-family: 'Nothing', sans-serif;
+      font-size: 1.8em;
+      border: none;
+      border-radius: 50%;
+      background: var(--btn-bg);
+      color: var(--btn-text);
+      cursor: pointer;
+      
+      transition: transform 0.3s cubic-bezier(0.3, 2, 0.6, 1), background-color 0.3s;
+      
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      -webkit-tap-highlight-color: transparent;
+      
+      user-select: none;
+    }
+
+    .btn:active {
+      transform: scale(0.85);
+      background-color: var(--btn-gray);
+      transition: transform 0.05s, background-color 0.05s;
+    }
+
+    .gray { background: var(--btn-gray); color: white; }
+    .red { background: var(--accent-color); color: white; }
+    .red:active { background: var(--accent-active); }
+
+    /* --- OVERLAYS --- */
+    .overlay {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 80%; 
+      background: var(--overlay-bg);
+      border-top-left-radius: 30px;
+      border-top-right-radius: 30px;
+      box-shadow: 0 -10px 30px rgba(0,0,0,0.5);
+      z-index: 100;
+      transform: translateY(110%);
+      transition: transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.1);
+      display: flex;
+      flex-direction: column;
+      padding: 25px;
+      box-sizing: border-box;
+      color: var(--text-color);
+      touch-action: pan-y; 
+    }
+
+    /* Extra z-index for the Legal modal to sit on top of settings */
+    #legal-overlay {
+        z-index: 110; 
+        height: 85%; /* Slightly taller to distinguish it */
+    }
+
+    .overlay.open { transform: translateY(0); }
+
+    .overlay-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      font-size: 1.8em;
+      border-bottom: 1px dashed var(--border-color);
+      padding-bottom: 15px;
+    }
+
+    .close-btn {
+      font-family: 'Nothing';
+      background: none;
+      border: none;
+      font-size: 1.2em;
+      color: var(--text-color);
+      cursor: pointer;
+      padding: 10px;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* History Styles */
+    .history-list {
+      flex-grow: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding-bottom: 20px;
+      touch-action: pan-y; 
+      overscroll-behavior: contain;
+    }
+    
+    .history-item {
+      padding: 15px;
+      background: rgba(128,128,128, 0.1);
+      border-radius: 15px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      -webkit-tap-highlight-color: transparent;
+    }
+    
+    .history-item:active { background: rgba(128,128,128, 0.2); }
+    .history-expr { font-size: 1rem; opacity: 0.7; margin-bottom: 5px;}
+    .history-res { font-size: 1.6rem; color: var(--accent-color); }
+
+    .clear-hist-btn {
+      margin-top: 10px;
+      padding: 15px;
+      background: var(--btn-bg);
+      color: var(--text-color);
+      border: 1px solid var(--border-color);
+      border-radius: 50px;
+      font-family: 'Nothing';
+      font-size: 1.1rem;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* Setting Styles */
+    .setting-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px 0;
+      font-size: 1.3em;
+      border-bottom: 1px solid rgba(128,128,128,0.2);
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    
+    .setting-item:active {
+        opacity: 0.6;
+    }
+
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 50px;
+      height: 28px;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #555;
+      transition: .4s;
+      border-radius: 34px;
+    }
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 20px;
+      width: 20px;
+      left: 4px;
+      bottom: 4px;
+      background-color: white;
+      transition: .4s;
+      border-radius: 50%;
+    }
+    input:checked + .slider { background-color: var(--accent-color); }
+    input:checked + .slider:before { transform: translateX(22px); }
+
+    /* Legal & Credits Styles */
+    .credits {
+      margin-top: auto;
+      text-align: center;
+      font-size: 0.9em;
+      opacity: 0.5;
+      padding-bottom: 10px;
+      line-height: 1.5;
+    }
+    
+    .legal-content {
+        padding: 10px 5px;
+        opacity: 0.9;
+        font-family: 'Nothing', sans-serif;
+    }
+    .legal-content h3 {
+        font-weight: normal;
+        margin-top: 0;
+        font-size: 1.5em;
+        margin-bottom: 10px;
+    }
+    .legal-content p {
+        font-size: 1rem;
+        line-height: 1.6;
+        margin-bottom: 15px;
+        opacity: 0.8;
+    }
+    .legal-section-title {
+        font-size: 0.9em;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: var(--accent-color);
+        margin-top: 25px;
+        margin-bottom: 10px;
+        display: block;
+    }
+
+    .arrow-icon { opacity: 0.5; font-family: monospace; }
+
+    /* --- PAGE TRANSITION CLASSES --- */
+    .slide-out-left { transform: translateX(-20vw) !important; opacity: 0 !important; }
+    .slide-out-right { transform: translateX(20vw) !important; opacity: 0 !important; }
+
+  </style>
+  
+  <script>
+    (function() {
+      const savedTheme = localStorage.getItem('theme');
+      if (savedTheme) {
+        document.documentElement.setAttribute('data-theme', savedTheme);
+      }
+    })();
+  </script>
+
+</head>
+
+<body>
+
+  <div class="top-buttons">
+    <button class="icon-btn" onclick="transitionTo('converters.html', 'next')" aria-label="Go to Converters">
+      <svg viewBox="0 0 24 24"><path d="M6.99 11L3 15l3.99 4v-3H14v-2H6.99v-3zM21 9l-3.99-4v3H10v2h7.01v3L21 9z"/></svg>
+    </button>
+    <button class="icon-btn" onclick="toggleSettings()" aria-label="Settings">
+      <svg viewBox="0 0 24 24"><path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/></svg>
+    </button>
+    <button class="icon-btn" onclick="toggleHistory()" aria-label="View History">
+      <svg viewBox="0 0 24 24"><path d="M13,3c-4.97,0-9,4.03-9,9H1l3.89,3.89l0.07,0.14L9,12H6c0-3.87,3.13-7,7-7s7,3.13,7,7s-3.13,7-7,7c-1.93,0-3.68-0.79-4.94-2.06l-1.42,1.42C8.27,19.99,10.51,21,13,21c4.97,0,9-4.03,9-9S17.97,3,13,3z M12,8v5l4.28,2.54l0.72-1.21l-3.5-2.08V8H12z"/></svg>
+    </button>
+  </div>
+
+  <div class="calculator">
+    <div class="display-container">
+      <input type="text" class="display" id="display" value="0" inputmode="none" spellcheck="false" autocomplete="off" autofocus>
+    </div>
+    
+    <div class="buttons">
+      <button class="btn gray" onclick="deleteAtCursor()">C</button>
+      <button class="btn gray" onclick="appendBrackets()">()</button>
+      <button class="btn gray" onclick="appendPercentage()">%</button>
+      <button class="btn red" onclick="appendOperator('/')">/</button>
+
+      <button class="btn" onclick="insertAtCursor('7')">7</button>
+      <button class="btn" onclick="insertAtCursor('8')">8</button>
+      <button class="btn" onclick="insertAtCursor('9')">9</button>
+      <button class="btn red" onclick="appendOperator('*')">x</button>
+
+      <button class="btn" onclick="insertAtCursor('4')">4</button>
+      <button class="btn" onclick="insertAtCursor('5')">5</button>
+      <button class="btn" onclick="insertAtCursor('6')">6</button>
+      <button class="btn red" onclick="appendOperator('-')">-</button>
+
+      <button class="btn" onclick="insertAtCursor('1')">1</button>
+      <button class="btn" onclick="insertAtCursor('2')">2</button>
+      <button class="btn" onclick="insertAtCursor('3')">3</button>
+      <button class="btn red" onclick="appendOperator('+')">+</button>
+
+      <button class="btn gray" onclick="clearAll()">AC</button>
+      <button class="btn" onclick="insertAtCursor('0')">0</button>
+      <button class="btn" onclick="insertAtCursor('.')">.</button>
+      <button class="btn red" onclick="appendOperator('=')">=</button>
+    </div>
+  </div>
+
+  <div id="history-overlay" class="overlay">
+    <div class="overlay-header">
+      <span>History</span>
+      <button class="close-btn" onclick="toggleHistory()">x</button>
+    </div>
+    <div id="history-list" class="history-list"></div>
+    <button class="clear-hist-btn" onclick="clearHistory()">Clear All</button>
+  </div>
+
+  <div id="settings-overlay" class="overlay">
+    <div class="overlay-header">
+      <span>Settings</span>
+      <button class="close-btn" onclick="toggleSettings()">x</button>
+    </div>
+    
+    <div class="setting-item">
+      <span>Light Mode</span>
+      <label class="switch">
+        <input type="checkbox" id="theme-toggle" onchange="toggleTheme()">
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <div class="setting-item" onclick="toggleLegal()">
+      <span>Legal Info</span>
+    </div>
+
+    <div class="credits">
+     NOTHING OS CALCULATOR<br>
+      &copy; SEDNIUM SYSTEMS
+    </div>
+  </div>
+
+  <div id="legal-overlay" class="overlay">
+    <div class="overlay-header">
+      <button class="close-btn" onclick="toggleLegal()" style="font-size: 1.5rem;">&#8592;</button>
+      <span>Legal</span>
+      <div style="width: 30px;"></div> </div>
+    
+    <div class="legal-content">
+      <h3>Nothing OS Calculator</h3>
+      <p>Version 2.2.0<br>
+      Built for the Community</p>
+
+      <span class="legal-section-title">Data Sources</span>
+      <p>
+        Currency conversion rates and financial data features are powered by the <strong>Fawaz Currency API</strong>.
+      </p>
+      
+      <span class="legal-section-title">Notices</span>
+      <p>
+        This is a concept application designed in the style of Nothing OS. It is not affiliated with Nothing Technology Limited.
+      </p>
+
+      <span class="legal-section-title">Developer</span>
+      <p>&copy; SEDNIUM SYSTEMS</p>
+    </div>
+  </div>
+  
+  <script>
+    function transitionTo(url, direction) {
+      if (direction === 'next') {
+        document.body.classList.add('slide-out-left');
+      } else {
+        document.body.classList.add('slide-out-right');
+      }
+      setTimeout(() => {
+        window.location.href = url;
+      }, 400);
+    }
+
+    const display = document.getElementById('display');
+    const historyOverlay = document.getElementById('history-overlay');
+    const settingsOverlay = document.getElementById('settings-overlay');
+    const legalOverlay = document.getElementById('legal-overlay');
+    let isInitial = true;
+
+    // --- KEY LOGIC: Prevent Focus Steal & Set Initial Position ---
+    document.addEventListener('DOMContentLoaded', () => {
+        const buttons = document.querySelectorAll('button');
+        buttons.forEach(btn => {
+            btn.addEventListener('mousedown', (e) => {
+                e.preventDefault(); 
+            });
+        });
+        
+        display.focus();
+        setTimeout(() => {
+            display.setSelectionRange(display.value.length, display.value.length);
+        }, 50);
+    });
+
+    function triggerHaptic() {
+      if (navigator.vibrate) navigator.vibrate(12);
+    }
+
+    // --- CURSOR / INPUT LOGIC ---
+
+    function insertAtCursor(value) {
+      triggerHaptic();
+
+      if (display.value === '0' || display.value === 'Error' || isInitial) {
+        display.value = value;
+        isInitial = false;
+        display.focus(); 
+        return;
+      }
+
+      const startPos = display.selectionStart;
+      const endPos = display.selectionEnd;
+      const originalValue = display.value;
+
+      display.value = originalValue.substring(0, startPos) + value + originalValue.substring(endPos);
+      const newPos = startPos + value.length;
+      display.setSelectionRange(newPos, newPos);
+      
+      display.focus(); 
+      isInitial = false;
+    }
+
+    function appendOperator(op) {
+      triggerHaptic();
+      if (op === '=') { calculate(); return; }
+      insertAtCursor(op);
+      isInitial = false;
+    }
+
+    function deleteAtCursor() {
+      triggerHaptic();
+      display.focus();
+
+      if (display.value === 'Error' || display.value === 'Infinity') {
+        clearAll();
+        return;
+      }
+
+      const startPos = display.selectionStart;
+      const endPos = display.selectionEnd;
+      const originalValue = display.value;
+
+      if (startPos !== endPos) {
+        display.value = originalValue.substring(0, startPos) + originalValue.substring(endPos);
+        display.setSelectionRange(startPos, startPos);
+        return;
+      }
+
+      if (startPos === 0) return;
+
+      display.value = originalValue.substring(0, startPos - 1) + originalValue.substring(endPos);
+      const newPos = startPos - 1;
+      display.setSelectionRange(newPos, newPos);
+
+      if (display.value === '') {
+        display.value = '0';
+        isInitial = true;
+        display.setSelectionRange(1, 1);
+      }
+    }
+
+    function appendBrackets() {
+      const text = display.value;
+      const openCount = (text.match(/\(/g) || []).length;
+      const closeCount = (text.match(/\)/g) || []).length;
+      const lastChar = text.slice(-1); 
+      
+      if (openCount > closeCount && (/\d|\./.test(lastChar) || lastChar === ')')) {
+        insertAtCursor(')');
+      } else {
+        insertAtCursor('(');
+      }
+    }
+
+    function appendPercentage() { insertAtCursor('%'); }
+
+    function clearAll() {
+      triggerHaptic();
+      display.value = '0';
+      isInitial = true;
+      display.focus();
+      // Reset cursor to end
+      setTimeout(() => display.setSelectionRange(1, 1), 0);
+    }
+
+    // --- MATH ---
+    function formatExpression(expr) {
+      return expr.replace(/(\d+(\.\d+)?|[^)]+)%/g, (match, group) => `(${group}/100)`)
+                 .replace(/÷/g, '/').replace(/×/g, '*');
+    }
+
+    function calculate() {
+      try {
+        const result = math.evaluate(formatExpression(display.value));
+        const finalResult = parseFloat(result.toFixed(8)).toString();
+        saveToHistory(display.value, finalResult);
+        display.value = finalResult;
+        isInitial = true;
+        display.setSelectionRange(display.value.length, display.value.length);
+      } catch (e) {
+        display.value = 'Error';
+        isInitial = true;
+      }
+      display.focus();
+    }
+
+    // --- UI HELPERS ---
+    function toggleHistory() {
+        triggerHaptic();
+        settingsOverlay.classList.remove('open');
+        legalOverlay.classList.remove('open'); // Ensure legal is closed
+        if(!historyOverlay.classList.contains('open')) loadHistoryUI();
+        historyOverlay.classList.toggle('open');
+    }
+
+    function toggleSettings() {
+        triggerHaptic();
+        historyOverlay.classList.remove('open');
+        legalOverlay.classList.remove('open'); // Ensure legal is closed if toggling settings
+        settingsOverlay.classList.toggle('open');
+    }
+
+    function toggleLegal() {
+        triggerHaptic();
+        // We do NOT close settingsOverlay here, so Legal slides OVER it.
+        // We only toggle the Legal overlay.
+        legalOverlay.classList.toggle('open');
+    }
+
+    function saveToHistory(expr, res) {
+        const history = JSON.parse(localStorage.getItem('calcHistory')) || [];
+        history.push(`${expr}=${res}`);
+        if (history.length > 50) history.shift();
+        localStorage.setItem('calcHistory', JSON.stringify(history));
+    }
+
+    function loadHistoryUI() {
+        const list = document.getElementById('history-list');
+        const history = JSON.parse(localStorage.getItem('calcHistory')) || [];
+        list.innerHTML = '';
+        if (history.length === 0) {
+            list.innerHTML = '<div style="text-align:center; padding:20px; opacity:0.5;">No History</div>';
+            return;
+        }
+        history.slice().reverse().forEach(item => {
+            const [expr, res] = item.split('=');
+            const div = document.createElement('div');
+            div.className = 'history-item';
+            div.innerHTML = `<span class="history-expr">${expr}</span><span class="history-res">= ${res}</span>`;
+            div.onclick = () => { 
+                triggerHaptic(); 
+                display.value = res; 
+                isInitial = true; 
+                display.focus();
+                toggleHistory(); 
+            };
+            list.appendChild(div);
+        });
+    }
+
+    function clearHistory() {
+        triggerHaptic();
+        if(confirm("Clear history?")) {
+            localStorage.removeItem('calcHistory');
+            loadHistoryUI();
+        }
+        display.focus();
+    }
+
+    function toggleTheme() {
+        triggerHaptic();
+        const next = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', next);
+        localStorage.setItem('theme', next);
+        display.focus();
+    }
+
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'light') {
+        document.getElementById('theme-toggle').checked = true;
+    }
+  </script>
+</body>
+</html>

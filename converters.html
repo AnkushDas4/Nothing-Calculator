@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Nothing Converter</title>
+    <link rel="stylesheet" href="style.css">
+
+    <script>
+        const savedTheme = localStorage.getItem("theme");
+        if (savedTheme === 'light') {
+            document.documentElement.setAttribute('data-theme', 'light');
+        } else {
+            document.documentElement.setAttribute('data-theme', 'dark');
+        }
+    </script>
+</head>
+<body class="prepare-slide-in-right">
+
+<div class="app-container">
+    <div class="header-top-bar">
+        <button class="icon-btn" onclick="transitionTo('index.html', 'back')" id="back-btn" title="Go Back">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+        </button>
+    </div>
+    <header>
+        <div class="header-main">
+            <h1>CONVERTER</h1>
+        </div>
+    </header>
+
+    <nav>
+        <ul>
+            <li><a href="#" class="nav-link active" data-target="page-currency">Currency</a></li>
+            <li><a href="#" class="nav-link" data-target="page-length">Length</a></li>
+            <li><a href="#" class="nav-link" data-target="page-mass">Mass</a></li>
+            <li><a href="#" class="nav-link" data-target="page-speed">Speed</a></li>
+            <li><a href="#" class="nav-link" data-target="page-volume">Volume</a></li>
+            <li><a href="#" class="nav-link" data-target="page-area">Area</a></li>
+            <li><a href="#" class="nav-link" data-target="page-data">Data</a></li>
+            <li><a href="#" class="nav-link" data-target="page-temp">Temp</a></li>
+        </ul>
+    </nav>
+
+    <main>
+        <div class="converter-group input-group">
+            <label for="main-input">Enter Value:</label>
+            <input type="number" id="main-input" placeholder="1.00" value="1">
+        </div>
+
+        <div class="conversion-wrapper">
+            <div class="converter-group" id="from-group">
+                <label>From</label>
+                <select id="select-from"></select>
+            </div>
+
+            <button class="swap-btn" id="swap-btn" title="Swap Units">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none">
+                    <path id="swap-arrow-1" d="M17 4L17 16L13 12M17 16L21 12" />
+                    <path id="swap-arrow-2" d="M7 20L7 8L3 12M7 8L11 12" />
+                </svg>
+            </button>
+
+            <div class="converter-group" id="to-group">
+                <label>To</label>
+                <select id="select-to"></select>
+            </div>
+        </div>
+
+        <div class="result-box" id="result-box">
+            <p>--</p>
+        </div>
+
+        <div class="page-content active" id="page-currency">
+            <div class="note" id="currency-note">
+                Initializing currency data...
+            </div>
+        </div>
+        <div class="page-content" id="page-length"></div>
+        <div class="page-content" id="page-mass"></div>
+        <div class="page-content" id="page-speed"></div>
+        <div class="page-content" id="page-volume"></div>
+        <div class="page-content" id="page-area"></div>
+        <div class="page-content" id="page-data"></div>
+        <div class="page-content" id="page-temp"></div>
+    </main>
+</div>
+
+<script src="script.js"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        setTimeout(() => {
+            document.body.classList.remove('prepare-slide-in-left');
+            document.body.classList.remove('prepare-slide-in-right');
+        }, 10);
+
+        // Initialize the Caching System
+        initCurrencySystem();
+    });
+
+    // Fallback transition function
+    function transitionTo(url, direction) {
+        if (window.transitionToExternal) {
+            window.transitionToExternal(url, direction);
+            return;
+        }
+        
+        if (direction === 'next') {
+            document.body.classList.add('slide-out-left');
+        } else {
+            document.body.classList.add('slide-out-right');
+        }
+        setTimeout(() => {
+            window.location.href = url;
+        }, 400);
+    }
+
+    // --- ADDED: CURRENCY CACHING SYSTEM ---
+    const CACHE_KEY = 'currency_rates_cache';
+    const CACHE_TIME_KEY = 'currency_rates_timestamp';
+    const NOTE_ELEM = document.getElementById('currency-note');
+
+    function initCurrencySystem() {
+        // 1. Try to load from LocalStorage first (Offline support)
+        const cachedData = localStorage.getItem(CACHE_KEY);
+        const cachedTime = localStorage.getItem(CACHE_TIME_KEY);
+
+        if (cachedData && cachedTime) {
+            console.log("Loaded currency rates from cache.");
+            const rates = JSON.parse(cachedData);
+            
+            // Dispatch event so your main script.js can use this data if it listens for it
+            // Or if your script.js defines a global 'rates' object, update it here.
+            // Assuming standard handling:
+            if (typeof updateCurrencyUI === 'function') {
+                updateCurrencyUI(rates); 
+            }
+            
+            updateStatusText(new Date(cachedTime), false);
+        }
+
+        // 2. Try to fetch fresh data
+        if (navigator.onLine) {
+            fetchCurrencyRates();
+        } else {
+            if(cachedTime) {
+                updateStatusText(new Date(cachedTime), true); // true = offline mode
+            } else {
+                NOTE_ELEM.innerHTML = "Offline. No cached data available.";
+            }
+        }
+        
+        // Listen for connection changes
+        window.addEventListener('online', fetchCurrencyRates);
+        window.addEventListener('offline', () => {
+             const time = localStorage.getItem(CACHE_TIME_KEY);
+             if(time) updateStatusText(new Date(time), true);
+        });
+    }
+
+    async function fetchCurrencyRates() {
+        NOTE_ELEM.innerHTML = "Syncing latest rates...";
+        
+        try {
+            // Using Fawaz Ahmed's API (Common free JSON API)
+            // If you use a different API key/url in script.js, update this URL.
+            const response = await fetch('https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.json');
+            
+            if (!response.ok) throw new Error("Network response was not ok");
+            
+            const data = await response.json();
+            
+            // SAVE TO CACHE
+            const now = new Date();
+            localStorage.setItem(CACHE_KEY, JSON.stringify(data));
+            localStorage.setItem(CACHE_TIME_KEY, now.toString());
+
+            // Update UI
+            if (typeof updateCurrencyUI === 'function') {
+                updateCurrencyUI(data);
+            }
+            
+            updateStatusText(now, false);
+            
+        } catch (error) {
+            console.error("Fetch failed:", error);
+            // Fallback to cache if fetch fails
+            const cachedTime = localStorage.getItem(CACHE_TIME_KEY);
+            if (cachedTime) {
+                updateStatusText(new Date(cachedTime), true); // true = offline/error
+            } else {
+                NOTE_ELEM.innerHTML = "Failed to load rates. Check connection.";
+            }
+        }
+    }
+
+    function updateStatusText(dateObj, isOffline) {
+        const dateStr = dateObj.toLocaleDateString();
+        const timeStr = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        
+        if (isOffline) {
+            NOTE_ELEM.innerHTML = `<span style="opacity:0.7">Offline Mode &bull; Using rates from: ${dateStr}, ${timeStr}</span>`;
+            NOTE_ELEM.style.color = "var(--accent-color)"; // Optional: highlight offline status
+        } else {
+            NOTE_ELEM.innerHTML = `Rates updated: ${dateStr}, ${timeStr}`;
+            NOTE_ELEM.style.color = "inherit";
+        }
+    }
+</script>
+
+</body>
+</html>
