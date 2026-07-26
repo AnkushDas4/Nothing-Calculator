@@ -1,215 +1,300 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Nothing Converter</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Nothing · Converter</title>
+  <style>
+    @font-face { font-family:'Nothing'; src:url('font.otf') format('opentype'); font-display:swap; }
 
-    <script>
-        const savedTheme = localStorage.getItem("theme");
-        if (savedTheme === 'light') {
-            document.documentElement.setAttribute('data-theme', 'light');
-        } else {
-            document.documentElement.setAttribute('data-theme', 'dark');
-        }
-    </script>
+    :root {
+      --bg:#0a0a0a; --surface:#111; --surface-2:#1a1a1a; --surface-3:#242424;
+      --border:rgba(255,255,255,0.07); --border-strong:rgba(255,255,255,0.13);
+      --text:#f0f0f0; --text-dim:#666; --text-muted:#3a3a3a;
+      --red:#FF2D2D; --red-dim:rgba(255,45,45,0.12); --red-glow:rgba(255,45,45,0.28);
+      --btn-num:#161616; --btn-fn:#1f1f1f;
+    }
+    [data-theme="light"] {
+      --bg:#efefef; --surface:#e6e6e6; --surface-2:#dcdcdc; --surface-3:#d0d0d0;
+      --border:rgba(0,0,0,0.07); --border-strong:rgba(0,0,0,0.14);
+      --text:#111; --text-dim:#888; --text-muted:#ccc;
+      --red:#d32f2f; --red-dim:rgba(211,47,47,0.10); --red-glow:rgba(211,47,47,0.22);
+      --btn-num:#e2e2e2; --btn-fn:#d6d6d6;
+    }
+
+    *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;}
+    input{-webkit-user-select:text;user-select:text;}
+
+    body{
+      font-family:'Nothing','Courier New',monospace;
+      background:var(--bg);color:var(--text);
+      height:100dvh;width:100vw;overflow:hidden;
+      display:flex;justify-content:center;
+      touch-action:manipulation;overscroll-behavior:none;
+      transform:translateX(0);opacity:1;
+      transition:transform 0.3s cubic-bezier(0.4,0,0.2,1),opacity 0.3s,background 0.3s,color 0.3s;
+    }
+    .slide-out-left{transform:translateX(-30%);opacity:0;}
+    .slide-out-right{transform:translateX(30%);opacity:0;}
+    .prepare-slide-in-right{transform:translateX(30%);opacity:0;}
+
+    /* ── SHELL ── */
+    .app-shell{width:100%;max-width:430px;height:100dvh;display:flex;flex-direction:column;overflow:hidden;}
+
+    /* ── TOP BAR ── */
+    .top-bar{display:flex;align-items:center;padding:16px 18px 0;flex-shrink:0;gap:4px;}
+    .back-btn{background:transparent;border:none;cursor:pointer;width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;transition:background 0.15s;flex-shrink:0;}
+    .back-btn:active{background:rgba(128,128,128,0.12);}
+    .back-btn svg{width:22px;height:22px;fill:none;stroke:var(--text-dim);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;}
+    .page-title-bar{flex:1;display:flex;flex-direction:column;justify-content:center;padding-left:4px;}
+    .page-title{font-size:1.1rem;letter-spacing:0.22em;text-transform:uppercase;color:var(--text);font-weight:normal;}
+    .page-subtitle{font-size:0.52rem;letter-spacing:0.2em;color:var(--text-dim);text-transform:uppercase;margin-top:2px;}
+
+    /* ── NAV TABS ── */
+    .nav-wrap{flex-shrink:0;overflow-x:auto;padding:10px 16px 0;}
+    .nav-wrap::-webkit-scrollbar{display:none;}
+    .nav-tabs{display:flex;gap:2px;border-bottom:1px solid var(--border);padding-bottom:0;}
+    .nav-tab{flex-shrink:0;background:transparent;border:none;cursor:pointer;padding:8px 10px 10px;font-family:'Nothing',monospace;font-size:0.6rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-dim);position:relative;transition:color 0.2s;}
+    .nav-tab::after{content:'';position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:0;height:2px;background:var(--red);border-radius:1px;transition:width 0.25s cubic-bezier(0.25,1,0.5,1);}
+    .nav-tab.active{color:var(--red);}
+    .nav-tab.active::after{width:70%;}
+
+    /* dotted rule */
+    .heading-rule{height:1px;margin:0 18px;flex-shrink:0;background:repeating-linear-gradient(to right,var(--border-strong) 0,var(--border-strong) 3px,transparent 3px,transparent 9px);}
+
+    /* ── CONVERTER AREA (scrollable top section) ── */
+    .converter-area{flex:0 0 auto;padding:14px 16px 10px;display:flex;flex-direction:column;gap:10px;}
+
+    /* combined display+result card */
+    .display-card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:12px 18px 10px;display:flex;flex-direction:column;gap:6px;}
+    .display-row{display:flex;justify-content:space-between;align-items:flex-end;}
+    .display-side{flex:1;min-width:0;}
+    .display-label{font-size:0.52rem;letter-spacing:0.22em;text-transform:uppercase;color:var(--text-dim);margin-bottom:2px;}
+    .display-value{font-size:clamp(1.5rem,7vw,2.2rem);color:var(--text);letter-spacing:0.01em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+    .display-value.result-side{text-align:right;color:var(--red);}
+    .display-divider{width:1px;height:48px;background:var(--border-strong);margin:0 14px;flex-shrink:0;}
+    .display-arrow{font-size:1.1rem;color:var(--text-dim);margin:0 10px;flex-shrink:0;}
+
+    /* unit selectors row */
+    .selectors-row{display:flex;gap:8px;align-items:stretch;}
+    .unit-selector-wrap{flex:1;min-width:0;}
+    .unit-selector-btn{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:10px 12px;cursor:pointer;display:flex;align-items:center;gap:8px;transition:border-color 0.2s,background 0.15s;min-width:0;}
+    .unit-selector-btn:active{background:var(--surface-2);border-color:var(--border-strong);}
+    .unit-flag{font-size:1.2rem;flex-shrink:0;line-height:1;}
+    .unit-info{flex:1;min-width:0;text-align:left;}
+    .unit-code{font-size:0.78rem;letter-spacing:0.08em;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .unit-name{font-size:0.52rem;letter-spacing:0.06em;color:var(--text-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px;}
+    .unit-chevron{flex-shrink:0;color:var(--text-muted);font-size:0.7rem;}
+
+    .swap-btn-inline{flex-shrink:0;width:42px;height:42px;margin-top:auto;background:var(--red);border:none;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 3px 14px var(--red-glow);transition:filter 0.15s;}
+    .swap-btn-inline:active{filter:brightness(0.82);}
+    .swap-btn-inline svg{width:20px;height:20px;stroke:#fff;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;fill:none;}
+    @keyframes spin360{to{transform:rotate(360deg);}}
+    .swap-btn-inline.animating svg{animation:spin360 0.38s ease-in-out;}
+
+    /* currency note */
+    .currency-note{font-size:0.58rem;letter-spacing:0.1em;color:var(--text-dim);text-align:center;padding:7px 14px;background:var(--surface);border:1px solid var(--border);border-radius:10px;line-height:1.7;}
+
+    /* ── KEYPAD ── */
+    .keypad-wrap{flex:1;min-height:0;padding:0 12px 16px;display:flex;flex-direction:column;}
+    .keypad-rule{height:1px;margin:0 4px 10px;background:repeating-linear-gradient(to right,var(--border-strong) 0,var(--border-strong) 3px,transparent 3px,transparent 9px);}
+    .conv-buttons{flex:1;display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+
+    .btn{
+      aspect-ratio:unset;height:100%;border:none;border-radius:50%;
+      font-family:'Nothing',monospace;font-size:clamp(1rem,4.5vw,1.45rem);
+      cursor:pointer;display:flex;align-items:center;justify-content:center;
+      position:relative;overflow:hidden;
+      transition:transform 0.32s cubic-bezier(0.18,2.4,0.5,1),background 0.15s,box-shadow 0.15s;
+    }
+    .btn:active{transform:scale(0.83);transition:transform 0.05s ease-out;}
+    .btn::after{content:'';position:absolute;inset:0;border-radius:50%;background:rgba(255,255,255,0.08);opacity:0;transform:scale(0.5);transition:opacity 0.25s,transform 0.25s;pointer-events:none;}
+    .btn:active::after{opacity:1;transform:scale(1);transition:none;}
+    .btn-num{background:var(--btn-num);color:var(--text);border:1px solid var(--border);box-shadow:0 2px 8px rgba(0,0,0,0.3);}
+    .btn-num:active{background:var(--surface-3);}
+    .btn-fn{background:var(--btn-fn);color:var(--text-dim);border:1px solid var(--border);font-size:clamp(0.7rem,3.2vw,1rem);box-shadow:0 2px 8px rgba(0,0,0,0.2);}
+    .btn-fn:active{background:var(--surface-3);color:var(--text);}
+    .btn-op{background:var(--red);color:#fff;border:none;box-shadow:0 4px 16px var(--red-glow);}
+    .btn-op:active{filter:brightness(0.82);}
+
+    /* ── PICKER MODAL ── */
+    .picker-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:300;opacity:0;pointer-events:none;transition:opacity 0.28s;backdrop-filter:blur(3px);}
+    .picker-backdrop.open{opacity:1;pointer-events:all;}
+    .picker-sheet{position:fixed;bottom:0;left:0;right:0;margin:0 auto;max-width:430px;height:82%;background:#0f0f0f;border-top:1px solid var(--border-strong);border-radius:28px 28px 0 0;z-index:301;transform:translateY(110%);transition:transform 0.36s cubic-bezier(0.16,1,0.3,1);display:flex;flex-direction:column;overflow:hidden;}
+    [data-theme="light"] .picker-sheet{background:#e8e8e8;}
+    .picker-sheet.open{transform:translateY(0);}
+    .picker-handle{width:32px;height:4px;background:var(--border-strong);border-radius:2px;margin:12px auto 0;flex-shrink:0;}
+    .picker-header{padding:14px 20px 10px;flex-shrink:0;}
+    .picker-title{font-size:0.62rem;letter-spacing:0.28em;text-transform:uppercase;color:var(--text-dim);}
+
+    /* search box — currency only */
+    .picker-search-wrap{padding:0 16px 10px;flex-shrink:0;}
+    .picker-search{width:100%;background:var(--surface-2);border:1px solid var(--border-strong);border-radius:100px;padding:10px 16px 10px 38px;font-family:'Nothing',monospace;font-size:0.8rem;letter-spacing:0.04em;color:var(--text);-webkit-user-select:text;user-select:text;}
+    .picker-search:focus{outline:none;border-color:var(--red);}
+    .picker-search::placeholder{color:var(--text-muted);}
+    .picker-search-icon{position:absolute;left:28px;top:50%;transform:translateY(-50%);width:16px;height:16px;fill:var(--text-dim);pointer-events:none;}
+    .picker-search-wrap{position:relative;}
+
+    /* list */
+    .picker-list{flex:1;overflow-y:auto;padding:4px 12px 20px;}
+    .picker-list::-webkit-scrollbar{display:none;}
+
+    .picker-item{display:flex;align-items:center;gap:12px;padding:12px 10px;border-radius:14px;cursor:pointer;transition:background 0.12s;border-bottom:1px solid var(--border);}
+    .picker-item:last-child{border-bottom:none;}
+    .picker-item:active{background:var(--surface-2);}
+    .picker-item.selected{background:var(--red-dim);border-color:rgba(255,45,45,0.15);}
+    .picker-flag{font-size:1.4rem;flex-shrink:0;line-height:1;width:28px;text-align:center;}
+    .picker-info{flex:1;min-width:0;}
+    .picker-code{font-size:0.82rem;letter-spacing:0.08em;color:var(--text);}
+    .picker-name{font-size:0.62rem;letter-spacing:0.04em;color:var(--text-dim);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .picker-check{width:18px;height:18px;flex-shrink:0;color:var(--red);display:none;}
+    .picker-item.selected .picker-check{display:block;}
+
+    /* unit picker (no search, no flags) */
+    .picker-unit-item{display:flex;align-items:center;justify-content:space-between;padding:14px 10px;border-radius:14px;cursor:pointer;transition:background 0.12s;border-bottom:1px solid var(--border);}
+    .picker-unit-item:last-child{border-bottom:none;}
+    .picker-unit-item:active{background:var(--surface-2);}
+    .picker-unit-item.selected{background:var(--red-dim);}
+    .picker-unit-label{font-size:0.9rem;letter-spacing:0.04em;color:var(--text);}
+    .picker-unit-check{width:18px;height:18px;color:var(--red);display:none;}
+    .picker-unit-item.selected .picker-unit-check{display:block;}
+
+    .no-results{text-align:center;padding:40px 20px;font-size:0.7rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-muted);}
+  </style>
+  <script>(function(){const t=localStorage.getItem('theme');if(t)document.documentElement.setAttribute('data-theme',t);})();</script>
 </head>
 <body class="prepare-slide-in-right">
 
-<div class="app-container">
-    <div class="header-top-bar">
-        <button class="icon-btn" onclick="transitionTo('index.html', 'back')" id="back-btn" title="Go Back">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="15 18 9 12 15 6"></polyline>
-            </svg>
-        </button>
+<div class="app-shell">
+
+  <!-- TOP BAR -->
+  <div class="top-bar">
+    <button class="back-btn" onclick="transitionTo('index.html','back')" aria-label="Back">
+      <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <div class="page-title-bar">
+      <div class="page-title">Converter</div>
+      <div class="page-subtitle" id="page-subtitle">Currency</div>
     </div>
-    <header>
-        <div class="header-main">
-            <h1>CONVERTER</h1>
+  </div>
+  <div class="heading-rule" style="margin-top:10px;"></div>
+
+  <!-- CATEGORY TABS -->
+  <div class="nav-wrap">
+    <div class="nav-tabs" id="nav-tabs">
+      <button class="nav-tab active" data-cat="currency">Currency</button>
+      <button class="nav-tab" data-cat="length">Length</button>
+      <button class="nav-tab" data-cat="mass">Mass</button>
+      <button class="nav-tab" data-cat="speed">Speed</button>
+      <button class="nav-tab" data-cat="volume">Volume</button>
+      <button class="nav-tab" data-cat="area">Area</button>
+      <button class="nav-tab" data-cat="data">Data</button>
+      <button class="nav-tab" data-cat="temp">Temp</button>
+    </div>
+  </div>
+
+  <!-- CONVERTER AREA -->
+  <div class="converter-area">
+
+    <!-- Combined display card -->
+    <div class="display-card">
+      <div class="display-row">
+        <div class="display-side">
+          <div class="display-label">Input</div>
+          <div class="display-value" id="conv-input-display">1</div>
         </div>
-    </header>
-
-    <nav>
-        <ul>
-            <li><a href="#" class="nav-link active" data-target="page-currency">Currency</a></li>
-            <li><a href="#" class="nav-link" data-target="page-length">Length</a></li>
-            <li><a href="#" class="nav-link" data-target="page-mass">Mass</a></li>
-            <li><a href="#" class="nav-link" data-target="page-speed">Speed</a></li>
-            <li><a href="#" class="nav-link" data-target="page-volume">Volume</a></li>
-            <li><a href="#" class="nav-link" data-target="page-area">Area</a></li>
-            <li><a href="#" class="nav-link" data-target="page-data">Data</a></li>
-            <li><a href="#" class="nav-link" data-target="page-temp">Temp</a></li>
-        </ul>
-    </nav>
-
-    <main>
-        <div class="converter-group input-group">
-            <label for="main-input">Enter Value:</label>
-            <input type="number" id="main-input" placeholder="1.00" value="1">
+        <div class="display-divider"></div>
+        <div class="display-side">
+          <div class="display-label" style="text-align:right;">Result</div>
+          <div class="display-value result-side" id="conv-result-display">--</div>
         </div>
+      </div>
+    </div>
 
-        <div class="conversion-wrapper">
-            <div class="converter-group" id="from-group">
-                <label>From</label>
-                <select id="select-from"></select>
-            </div>
+    <!-- From / Swap / To -->
+    <div class="selectors-row">
+      <div class="unit-selector-wrap">
+        <button class="unit-selector-btn" id="from-btn" onclick="openPicker('from')">
+          <span class="unit-flag" id="from-flag">🇺🇸</span>
+          <div class="unit-info">
+            <div class="unit-code" id="from-code">USD</div>
+            <div class="unit-name" id="from-name">United States Dollar</div>
+          </div>
+          <span class="unit-chevron">▾</span>
+        </button>
+      </div>
+      <button class="swap-btn-inline" id="swap-btn" aria-label="Swap">
+        <svg viewBox="0 0 24 24">
+          <path d="M17 4v12l-4-4M17 16l4-4"/>
+          <path d="M7 20V8L3 12M7 8l4 4"/>
+        </svg>
+      </button>
+      <div class="unit-selector-wrap">
+        <button class="unit-selector-btn" id="to-btn" onclick="openPicker('to')">
+          <span class="unit-flag" id="to-flag">🇪🇺</span>
+          <div class="unit-info">
+            <div class="unit-code" id="to-code">EUR</div>
+            <div class="unit-name" id="to-name">Euro</div>
+          </div>
+          <span class="unit-chevron">▾</span>
+        </button>
+      </div>
+    </div>
 
-            <button class="swap-btn" id="swap-btn" title="Swap Units">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none">
-                    <path id="swap-arrow-1" d="M17 4L17 16L13 12M17 16L21 12" />
-                    <path id="swap-arrow-2" d="M7 20L7 8L3 12M7 8L11 12" />
-                </svg>
-            </button>
+    <!-- Currency note (hidden for unit types) -->
+    <div class="currency-note" id="currency-note" style="display:none;">Loading live rates…</div>
 
-            <div class="converter-group" id="to-group">
-                <label>To</label>
-                <select id="select-to"></select>
-            </div>
-        </div>
+  </div><!-- /converter-area -->
 
-        <div class="result-box" id="result-box">
-            <p>--</p>
-        </div>
+  <!-- KEYPAD -->
+  <div class="keypad-wrap">
+    <div class="keypad-rule"></div>
+    <div class="conv-buttons">
+      <!-- Row 1 -->
+      <button class="btn btn-fn" onclick="kbDel()">C</button>
+      <button class="btn btn-fn" onclick="kbToggleSign()">+/−</button>
+      <button class="btn btn-fn" onclick="kbAppend('00')">00</button>
+      <button class="btn btn-op" onclick="kbClear()">AC</button>
+      <!-- Row 2 -->
+      <button class="btn btn-num" onclick="kbAppend('7')">7</button>
+      <button class="btn btn-num" onclick="kbAppend('8')">8</button>
+      <button class="btn btn-num" onclick="kbAppend('9')">9</button>
+      <button class="btn btn-fn" style="font-size:clamp(0.6rem,2.8vw,0.85rem);">⌫</button>
+      <!-- Row 3 -->
+      <button class="btn btn-num" onclick="kbAppend('4')">4</button>
+      <button class="btn btn-num" onclick="kbAppend('5')">5</button>
+      <button class="btn btn-num" onclick="kbAppend('6')">6</button>
+      <!-- placeholder for layout balance -->
+      <div></div>
+      <!-- Row 4 -->
+      <button class="btn btn-num" onclick="kbAppend('1')">1</button>
+      <button class="btn btn-num" onclick="kbAppend('2')">2</button>
+      <button class="btn btn-num" onclick="kbAppend('3')">3</button>
+      <div></div>
+      <!-- Row 5 -->
+      <button class="btn btn-num" onclick="kbAppend('0')" style="grid-column:span 2;border-radius:100px;">0</button>
+      <button class="btn btn-num" onclick="kbAppend('.')">.</button>
+      <div></div>
+    </div>
+  </div>
 
-        <div class="page-content active" id="page-currency">
-            <div class="note" id="currency-note">
-                Initializing currency data...
-            </div>
-        </div>
-        <div class="page-content" id="page-length"></div>
-        <div class="page-content" id="page-mass"></div>
-        <div class="page-content" id="page-speed"></div>
-        <div class="page-content" id="page-volume"></div>
-        <div class="page-content" id="page-area"></div>
-        <div class="page-content" id="page-data"></div>
-        <div class="page-content" id="page-temp"></div>
-    </main>
+</div><!-- /app-shell -->
+
+<!-- PICKER MODAL -->
+<div class="picker-backdrop" id="picker-backdrop" onclick="closePicker()"></div>
+<div class="picker-sheet" id="picker-sheet">
+  <div class="picker-handle"></div>
+  <div class="picker-header">
+    <div class="picker-title" id="picker-title">Select Currency</div>
+  </div>
+  <!-- search (currency only) -->
+  <div class="picker-search-wrap" id="picker-search-wrap">
+    <svg class="picker-search-icon" viewBox="0 0 24 24"><path d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    <input class="picker-search" type="text" id="picker-search" placeholder="Search currency…" oninput="filterPicker()" autocomplete="off" spellcheck="false">
+  </div>
+  <div class="picker-list" id="picker-list"></div>
 </div>
 
 <script src="script.js"></script>
-
-<script>
-    document.addEventListener('DOMContentLoaded', () => {
-        setTimeout(() => {
-            document.body.classList.remove('prepare-slide-in-left');
-            document.body.classList.remove('prepare-slide-in-right');
-        }, 10);
-
-        // Initialize the Caching System
-        initCurrencySystem();
-    });
-
-    // Fallback transition function
-    function transitionTo(url, direction) {
-        if (window.transitionToExternal) {
-            window.transitionToExternal(url, direction);
-            return;
-        }
-        
-        if (direction === 'next') {
-            document.body.classList.add('slide-out-left');
-        } else {
-            document.body.classList.add('slide-out-right');
-        }
-        setTimeout(() => {
-            window.location.href = url;
-        }, 400);
-    }
-
-    // --- ADDED: CURRENCY CACHING SYSTEM ---
-    const CACHE_KEY = 'currency_rates_cache';
-    const CACHE_TIME_KEY = 'currency_rates_timestamp';
-    const NOTE_ELEM = document.getElementById('currency-note');
-
-    function initCurrencySystem() {
-        // 1. Try to load from LocalStorage first (Offline support)
-        const cachedData = localStorage.getItem(CACHE_KEY);
-        const cachedTime = localStorage.getItem(CACHE_TIME_KEY);
-
-        if (cachedData && cachedTime) {
-            console.log("Loaded currency rates from cache.");
-            const rates = JSON.parse(cachedData);
-            
-            // Dispatch event so your main script.js can use this data if it listens for it
-            // Or if your script.js defines a global 'rates' object, update it here.
-            // Assuming standard handling:
-            if (typeof updateCurrencyUI === 'function') {
-                updateCurrencyUI(rates); 
-            }
-            
-            updateStatusText(new Date(cachedTime), false);
-        }
-
-        // 2. Try to fetch fresh data
-        if (navigator.onLine) {
-            fetchCurrencyRates();
-        } else {
-            if(cachedTime) {
-                updateStatusText(new Date(cachedTime), true); // true = offline mode
-            } else {
-                NOTE_ELEM.innerHTML = "Offline. No cached data available.";
-            }
-        }
-        
-        // Listen for connection changes
-        window.addEventListener('online', fetchCurrencyRates);
-        window.addEventListener('offline', () => {
-             const time = localStorage.getItem(CACHE_TIME_KEY);
-             if(time) updateStatusText(new Date(time), true);
-        });
-    }
-
-    async function fetchCurrencyRates() {
-        NOTE_ELEM.innerHTML = "Syncing latest rates...";
-        
-        try {
-            // Using Fawaz Ahmed's API (Common free JSON API)
-            // If you use a different API key/url in script.js, update this URL.
-            const response = await fetch('https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.json');
-            
-            if (!response.ok) throw new Error("Network response was not ok");
-            
-            const data = await response.json();
-            
-            // SAVE TO CACHE
-            const now = new Date();
-            localStorage.setItem(CACHE_KEY, JSON.stringify(data));
-            localStorage.setItem(CACHE_TIME_KEY, now.toString());
-
-            // Update UI
-            if (typeof updateCurrencyUI === 'function') {
-                updateCurrencyUI(data);
-            }
-            
-            updateStatusText(now, false);
-            
-        } catch (error) {
-            console.error("Fetch failed:", error);
-            // Fallback to cache if fetch fails
-            const cachedTime = localStorage.getItem(CACHE_TIME_KEY);
-            if (cachedTime) {
-                updateStatusText(new Date(cachedTime), true); // true = offline/error
-            } else {
-                NOTE_ELEM.innerHTML = "Failed to load rates. Check connection.";
-            }
-        }
-    }
-
-    function updateStatusText(dateObj, isOffline) {
-        const dateStr = dateObj.toLocaleDateString();
-        const timeStr = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        
-        if (isOffline) {
-            NOTE_ELEM.innerHTML = `<span style="opacity:0.7">Offline Mode &bull; Using rates from: ${dateStr}, ${timeStr}</span>`;
-            NOTE_ELEM.style.color = "var(--accent-color)"; // Optional: highlight offline status
-        } else {
-            NOTE_ELEM.innerHTML = `Rates updated: ${dateStr}, ${timeStr}`;
-            NOTE_ELEM.style.color = "inherit";
-        }
-    }
-</script>
-
 </body>
 </html>
