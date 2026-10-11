@@ -1,0 +1,21 @@
+{
+  "id": "data",
+  "title": "Data",
+  "order": 7,
+  "kind": "factor",
+  "base": "Byte",
+  "units": {
+    "Bit":      { "symbol": "b",   "factor": 0.125 },
+    "Byte":     { "symbol": "B",   "factor": 1 },
+    "Kilobyte": { "symbol": "kB",  "factor": 1000 },
+    "Kibibyte": { "symbol": "KiB", "factor": 1024 },
+    "Megabyte": { "symbol": "MB",  "factor": 1000000 },
+    "Mebibyte": { "symbol": "MiB", "factor": 1048576 },
+    "Gigabyte": { "symbol": "GB",  "factor": 1000000000 },
+    "Gibibyte": { "symbol": "GiB", "factor": 1073741824 },
+    "Terabyte": { "symbol": "TB",  "factor": 1000000000000 },
+    "Tebibyte": { "symbol": "TiB", "factor": 1099511627776 },
+    "Petabyte": { "symbol": "PB",  "factor": 1000000000000000 },
+    "Pebibyte": { "symbol": "PiB", "factor": 1125899906842624 }
+  }
+}

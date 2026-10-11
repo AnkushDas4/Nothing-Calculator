@@ -1,6 +1,15 @@
 {
-    "Meter/second": 1,
-    "Kilometer/hour": 0.277778,
-    "Mile/hour": 0.44704,
-    "Foot/second": 0.3048
+  "id": "speed",
+  "title": "Speed",
+  "order": 4,
+  "kind": "factor",
+  "base": "Meter/second",
+  "units": {
+    "Meter/second":   { "symbol": "m/s",  "factor": 1 },
+    "Kilometer/hour": { "symbol": "km/h", "factor": 0.2777777777777778 },
+    "Mile/hour":      { "symbol": "mph",  "factor": 0.44704 },
+    "Foot/second":    { "symbol": "ft/s", "factor": 0.3048 },
+    "Knot":           { "symbol": "kn",   "factor": 0.5144444444444445 },
+    "Mach":           { "symbol": "Ma",   "factor": 340.29 }
+  }
 }

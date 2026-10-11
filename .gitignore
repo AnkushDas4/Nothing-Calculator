@@ -1,0 +1,30 @@
+# dependencies
+node_modules/
+
+# build outputs
+dist/
+*.apk
+*.aab
+*.idsig
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/.idea/
+android/.kotlin/
+android/capacitor-cordova-android-plugins/
+android/keystore.properties
+android/app/*.jks
+android/app/*.keystore
+android/app/*.p12
+
+# os / editor
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
+
+# python
+__pycache__/
+*.pyc
