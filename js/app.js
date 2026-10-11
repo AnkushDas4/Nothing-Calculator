@@ -596,7 +596,9 @@
     document.addEventListener('keydown', (event) => {
       if (event.key === 'Escape') UI.sheets.closeAll(false);
     });
-    document.addEventListener('visible', render);
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) render();
+    });
 
     UI.enterAnimation('next');
     syncSciPanel();

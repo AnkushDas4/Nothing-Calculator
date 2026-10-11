@@ -28,7 +28,7 @@
   opacity: 0.95;
 }
 
-.display-secondary .accent {
+.display-secondary.accent {
   color: var(--accent);
 }
 
