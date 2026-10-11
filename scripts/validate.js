@@ -132,6 +132,7 @@ function checkAndroid() {
     'android/app/src/main/res/values/strings.xml',
     'android/app/src/main/res/layout/activity_main.xml',
     'android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml',
+    'android/app/src/main/res/values/colors.xml',
     'android/ci-debug.p12',
   ];
   required.forEach((file) => {
