@@ -54,6 +54,12 @@ android {
         }
     }
 
+    buildFeatures {
+        // AGP 8 disables BuildConfig by default; MainActivity reports its
+        // version through BuildConfig.VERSION_NAME in the WebView user agent
+        buildConfig = true
+    }
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
