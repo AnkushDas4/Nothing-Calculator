@@ -38,7 +38,14 @@ function main() {
     console.log(`→ bumping version to ${explicit}`);
     if (!dryRun) {
       execSync(`node scripts/set-version.js ${explicit}`, { cwd: ROOT, stdio: 'inherit' });
-      execSync(`git add package.json js/version.js android/app/build.gradle`, { cwd: ROOT, stdio: 'inherit' });
+      // The packaged android assets include js/version.js, so re-sync them in
+      // the same commit — otherwise the tag ships a stale stamp and
+      // `sync-android.js --check` fails in CI.
+      execSync('node scripts/sync-android.js', { cwd: ROOT, stdio: 'inherit' });
+      execSync('git add package.json js/version.js android/app/build.gradle android/app/src/main/assets/public', {
+        cwd: ROOT,
+        stdio: 'inherit',
+      });
       execSync(`git commit -m ${JSON.stringify(message)}`, { cwd: ROOT, stdio: 'inherit' });
     }
   }

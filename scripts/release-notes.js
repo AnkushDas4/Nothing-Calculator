@@ -20,6 +20,7 @@ const HIGHLIGHTS = [
   'Degree/radian switching, configurable decimals, thousands separators, haptics and preview toggles',
   'Rotate button (and Settings) flips between the clean portrait keypad and the landscape layout with the scientific panel',
   'Converter with 161 currencies (offline fallback) and length, mass, speed, volume, area, data, time, temperature',
+  'Converter input shows every keypress — the decimal point, trailing zeros and long values stay visible',
   'Keyboard support, tap-to-copy, searchable history, installable PWA',
   'Offline-first: everything ships inside the APK — no CDN, no telemetry',
 ];
