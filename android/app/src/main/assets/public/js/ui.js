@@ -519,6 +519,19 @@
     return (global.NC_VERSION || { version: 'dev', build: 'dev' }).build;
   }
 
+  /**
+   * Groups the integer part of every number in `text`, leaving the rest
+   * exactly as typed ("1234567.50" → "1,234,567.50", "12." → "12.").
+   * Used for input fields that echo a literal number instead of a result.
+   */
+  function groupDigits(text) {
+    return String(text === null || text === undefined ? '' : text).replace(/\d+(?:\.\d*)?/g, (match) => {
+      const parts = match.split('.');
+      const integer = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+      return parts.length > 1 ? integer + '.' + parts[1] : integer;
+    });
+  }
+
   function escapeHtml(text) {
     return String(text).replace(/[&<>"']/g, (ch) => ({
       '&': '&amp;',
@@ -576,6 +589,7 @@
     version,
     build,
     escapeHtml,
+    groupDigits,
     navigate,
     enterAnimation,
   };

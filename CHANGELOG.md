@@ -3,6 +3,20 @@
 All notable changes to n-calc are documented here. This project follows
 [Semantic Versioning](https://semver.org/) and releases are published from Git tags.
 
+## [Unreleased]
+
+### Fixed
+
+- **Converter input field** now echoes what was actually typed instead of the parsed,
+  formatted value. The decimal point, trailing zeros and any digit beyond the display
+  precision used to be invisible, so the keypad looked hung: `1.50` showed as `1.5`, and
+  with a *decimals* preference set, every digit typed past it was swallowed (`1.2345`
+  stayed `1.23`). Only backspace or AC made the number change again.
+- Long numbers in the value card now shrink to fit instead of being clipped
+  (`UI.fitText`, re-applied after a rotation).
+- The 15-digit input cap explains itself with a "Maximum 15 digits" toast instead of
+  silently dropping keys.
+
 ## [3.1.0] — 2026-10-11
 
 ### Added

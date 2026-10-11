@@ -279,6 +279,82 @@ test('converter: length conversion and swap', async () => {
   assert.equal(text(window, '#result-value'), shown(U.convert('length', 1, 'Foot', 'Meter')));
 });
 
+test('converter: the input field echoes exactly what was typed', async () => {
+  const { window } = await boot('converters.html');
+  click(window, '.key[data-action="clear"]');
+
+  click(window, '.key[data-action="digit"][data-value="1"]');
+  click(window, '.key[data-action="decimal"]');
+  // the decimal point is visible immediately — it used to be swallowed
+  assert.equal(text(window, '#input-value'), '1.');
+
+  click(window, '.key[data-action="digit"][data-value="5"]');
+  assert.equal(text(window, '#input-value'), '1.5');
+
+  // trailing zeros keep showing, so the key never looks dead
+  click(window, '.key[data-action="digit"][data-value="0"]');
+  assert.equal(text(window, '#input-value'), '1.50');
+
+  click(window, '.key[data-action="backspace"]');
+  assert.equal(text(window, '#input-value'), '1.5');
+  click(window, '.key[data-action="backspace"]');
+  assert.equal(text(window, '#input-value'), '1.');
+});
+
+test('converter: digits past the display precision stay visible', async () => {
+  // a decimals preference used to hide every digit typed after it
+  const { window } = await boot('converters.html', { 'ncalc.decimals': '"2"' });
+  click(window, '.key[data-action="clear"]');
+  ['1', '2', '3', '4', '5'].forEach((digit) =>
+    click(window, '.key[data-action="digit"][data-value="' + digit + '"]'),
+  );
+  click(window, '.key[data-action="decimal"]');
+  ['6', '7'].forEach((digit) =>
+    click(window, '.key[data-action="digit"][data-value="' + digit + '"]'),
+  );
+  assert.equal(text(window, '#input-value'), '12,345.67');
+});
+
+test('converter: the input is grouped like the calculator display', async () => {
+  const { window } = await boot('converters.html');
+  click(window, '.key[data-action="clear"]');
+  ['1', '2', '3', '4', '5', '6', '7'].forEach((digit) =>
+    click(window, '.key[data-action="digit"][data-value="' + digit + '"]'),
+  );
+  assert.equal(text(window, '#input-value'), '1,234,567');
+
+  // …and the grouping preference is honoured
+  const plain = await boot('converters.html', { 'ncalc.grouping': 'false' });
+  click(plain.window, '.key[data-action="clear"]');
+  ['1', '2', '3', '4'].forEach((digit) =>
+    click(plain.window, '.key[data-action="digit"][data-value="' + digit + '"]'),
+  );
+  assert.equal(text(plain.window, '#input-value'), '1234');
+});
+
+test('converter: the digit cap announces itself instead of going dead', async () => {
+  const { window } = await boot('converters.html');
+  click(window, '.key[data-action="clear"]');
+  '123456789012345'.split('').forEach((digit) =>
+    click(window, '.key[data-action="digit"][data-value="' + digit + '"]'),
+  );
+  assert.equal(text(window, '#input-value'), '123,456,789,012,345');
+
+  click(window, '.key[data-action="decimal"]');
+  assert.equal(text(window, '#input-value'), '123,456,789,012,345.');
+
+  click(window, '.key[data-action="digit"][data-value="6"]');
+  assert.equal(text(window, '#input-value'), '123,456,789,012,345.');
+  const toast = window.document.querySelector('.toast-host .toast');
+  assert.ok(toast, 'a toast should explain why the key did nothing');
+  assert.match(toast.textContent, /Maximum 15 digits/);
+
+  // backspace frees a slot again
+  click(window, '.key[data-action="backspace"]');
+  click(window, '.key[data-action="digit"][data-value="6"]');
+  assert.equal(text(window, '#input-value'), '123,456,789,012,345');
+});
+
 test('converter: typing updates the result', async () => {
   const { window } = await boot('converters.html');
   click(window, '#tabs [data-category="temp"]');

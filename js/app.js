@@ -69,12 +69,7 @@
   function prettyGrouped(text) {
     const source = String(text || '');
     if (UI.prefs.all.grouping === false) return E.pretty(source);
-    const grouped = source.replace(/\d+(?:\.\d*)?/g, (match) => {
-      const parts = match.split('.');
-      const integer = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-      return parts.length > 1 ? integer + '.' + parts[1] : integer;
-    });
-    return E.pretty(grouped);
+    return E.pretty(UI.groupDigits(source));
   }
 
   function angleOptions() {

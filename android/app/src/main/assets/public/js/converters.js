@@ -291,11 +291,30 @@
       el.resultValue.style.opacity = '0.6';
     }
     el.resultValue.dataset.value = Number.isFinite(result) ? String(result) : '';
+    fitValueText(el.resultValue);
   }
 
+  /**
+   * Shrinks `node` so a long number stays fully readable instead of being
+   * clipped. The inline size is cleared first so the stylesheet's `clamp()`
+   * size is the starting point — and the text can grow back after that.
+   */
+  function fitValueText(node) {
+    if (!node || !UI.fitText) return;
+    node.style.fontSize = '';
+    const base = parseFloat(window.getComputedStyle(node).fontSize) || 24;
+    UI.fitText(node, { max: base, min: 11, maxLines: 1 });
+  }
+
+  /**
+   * The input field echoes what was typed — the literal digits, the decimal
+   * point (even a trailing one) and any trailing zeros — so every key press
+   * is visible. Only the integer part is grouped, following the setting.
+   */
   function renderInput() {
-    const value = parsedInput();
-    el.inputValue.textContent = input === '' || input === '-' ? input || '0' : format(value);
+    const literal = input === '' || input === '-' ? input || '0' : input;
+    el.inputValue.textContent = UI.prefs.all.grouping === false ? literal : UI.groupDigits(literal);
+    fitValueText(el.inputValue);
   }
 
   function renderSelectors() {
@@ -362,16 +381,41 @@
 
   /* ── keypad ───────────────────────────────────────────────── */
 
+  /* Keys past this many digits are ignored — the number would lose
+     precision anyway. Ignoring is announced so the keypad never looks
+     broken (that is what made the decimal key appear to "hang"). */
+  const MAX_INPUT_DIGITS = 15;
+  let fullNoticeAt = 0;
+
+  function typedDigits(text) {
+    return String(text).replace(/[-.]/g, '').length;
+  }
+
+  function warnInputFull() {
+    const now = Date.now();
+    if (now - fullNoticeAt < 1600) return;
+    fullNoticeAt = now;
+    UI.toast('Maximum ' + MAX_INPUT_DIGITS + ' digits');
+  }
+
   function mutateInput(action, value) {
     switch (action) {
       case 'digit':
         if (input === '0') input = value;
         else if (input === '-0') input = '-' + value;
-        else if (input.replace(/[-.]/g, '').length < 15) input += value;
+        else if (typedDigits(input) < MAX_INPUT_DIGITS) input += value;
+        else {
+          warnInputFull();
+          return false;
+        }
         break;
       case 'double-zero':
         if (input === '0' || input === '') break;
-        if (input.replace(/[-.]/g, '').length < 14) input += '00';
+        if (typedDigits(input) + 2 <= MAX_INPUT_DIGITS) input += '00';
+        else {
+          warnInputFull();
+          return false;
+        }
         break;
       case 'decimal':
         if (input.indexOf('.') < 0) input = (input === '' ? '0' : input) + '.';
@@ -670,8 +714,12 @@
       if (!document.hidden) ensureRates(false);
     });
 
-    // the layout preference is shared with the calculator page
-    UI.layout.watch();
+    // the layout preference is shared with the calculator page; re-fit the
+    // value card after a rotation so the numbers still fit their column
+    UI.layout.watch(() => {
+      renderInput();
+      fitValueText(el.resultValue);
+    });
 
     UI.enterAnimation('back');
     if (categoryId === 'currency') ensureRates(false);
