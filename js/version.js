@@ -3,5 +3,5 @@
  * `version` is shown in the UI, `build` is stamped by CI.
  */
 (function (root) {
-  root.NC_VERSION = { version: '3.1.0', build: '2026-10-11', date: '2026-10-11' };
+  root.NC_VERSION = { version: '3.2.0', build: '2026-10-11', date: '2026-10-11' };
 })(typeof self !== 'undefined' ? self : this);
