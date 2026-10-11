@@ -70,7 +70,8 @@ jobs:
       - name: Assemble debug APK
         working-directory: android
         run: |
-          set -o pipefail
+          # GitHub runs steps with `bash -e`; disable it so the error report below runs
+          set +e -o pipefail
           ./gradlew --no-daemon --stacktrace assembleDebug 2>&1 | tee gradle.log
           status=$?
           if [ $status -ne 0 ]; then
