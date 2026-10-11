@@ -3,7 +3,7 @@
 All notable changes to n-calc are documented here. This project follows
 [Semantic Versioning](https://semver.org/) and releases are published from Git tags.
 
-## [Unreleased]
+## [3.1.0] — 2026-10-11
 
 ### Added
 
