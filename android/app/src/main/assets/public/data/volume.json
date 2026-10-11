@@ -1,0 +1,23 @@
+{
+  "id": "volume",
+  "title": "Volume",
+  "order": 5,
+  "kind": "factor",
+  "base": "Liter",
+  "units": {
+    "Liter":                { "symbol": "L",      "factor": 1 },
+    "Milliliter":           { "symbol": "mL",     "factor": 0.001 },
+    "Cubic meter":          { "symbol": "m³",     "factor": 1000 },
+    "Cubic centimeter":     { "symbol": "cm³",    "factor": 0.001 },
+    "Cubic inch":           { "symbol": "in³",    "factor": 0.016387064 },
+    "Cubic foot":           { "symbol": "ft³",    "factor": 28.316846592 },
+    "Gallon (US)":          { "symbol": "gal",    "factor": 3.785411784 },
+    "Quart (US)":           { "symbol": "qt",     "factor": 0.946352946 },
+    "Pint (US)":            { "symbol": "pt",     "factor": 0.473176473 },
+    "Cup (US)":             { "symbol": "cup",    "factor": 0.2365882365 },
+    "Fluid ounce (US)":     { "symbol": "fl oz",  "factor": 0.0295735295625 },
+    "Tablespoon (US)":      { "symbol": "tbsp",   "factor": 0.01478676478125 },
+    "Teaspoon (US)":        { "symbol": "tsp",    "factor": 0.00492892159375 },
+    "Gallon (Imperial)":    { "symbol": "imp gal","factor": 4.54609 }
+  }
+}

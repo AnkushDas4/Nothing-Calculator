@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <title>N-Calc · Nothing inspired calculator</title>
+    <meta name="theme-color" content="#0a0a0a" />
+    <meta
+      name="description"
+      content="N-Calc — a dot-matrix calculator and unit converter inspired by Nothing OS. Works offline, installable, open source."
+    />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="icons/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="icons/icon-192.png" />
+    <link rel="stylesheet" href="css/base.css" />
+    <link rel="stylesheet" href="css/calculator.css" />
+    <script>
+      /* applied before first paint so there is never a theme flash */
+      (function () {
+        try {
+          var raw = localStorage.getItem('ncalc.theme');
+          var mode = raw ? JSON.parse(raw) : localStorage.getItem('theme');
+          if (mode !== 'dark' && mode !== 'light') mode = 'system';
+          var dark =
+            mode === 'system'
+              ? !window.matchMedia || window.matchMedia('(prefers-color-scheme: dark)').matches
+              : mode === 'dark';
+          document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+        } catch (err) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <div class="backdrop" id="backdrop"></div>
+
+    <main class="app" id="app">
+      <!-- top bar -->
+      <header class="topbar">
+        <div class="brand">
+          <span class="brand-dot" aria-hidden="true"></span>
+          <span class="brand-name">N-Calc</span>
+        </div>
+        <div class="topbar-actions">
+          <button class="icon-btn" id="converter-btn" type="button" aria-label="Converter" title="Unit &amp; currency converter">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="M6.99 11L3 15l3.99 4v-3H14v-2H6.99v-3zM21 9l-3.99-4v3H10v2h7.01v3L21 9z"
+              />
+            </svg>
+          </button>
+          <button class="chip" id="angle-chip" type="button" aria-pressed="false" title="Toggle degrees / radians">
+            DEG
+          </button>
+          <button class="chip chip--ghost" id="sci-chip" type="button" aria-pressed="false" title="Scientific keys">
+            fx
+          </button>
+          <button class="icon-btn" id="history-btn" type="button" aria-label="History" title="History">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21L13 12.5V8h-1z"
+              />
+            </svg>
+          </button>
+          <button class="icon-btn" id="settings-btn" type="button" aria-label="Settings" title="Settings">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.05-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.56-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.22-.07.47.12.61l2.03 1.58c-.05.3-.07.63-.07.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"
+              />
+            </svg>
+          </button>
+        </div>
+      </header>
+
+      <!-- display -->
+      <section class="display" id="display" title="Tap to copy the current value">
+        <div class="display-secondary" id="secondary-line"></div>
+        <div class="display-main" id="main-line" aria-live="polite">0</div>
+        <div class="display-meta">
+          <span class="meta-chip" id="ans-chip" hidden>ANS</span>
+          <span class="copy-hint">tap to copy</span>
+        </div>
+        <div class="rule display-rule"></div>
+      </section>
+
+      <!-- keypad -->
+      <section class="keypad" id="keypad">
+        <div class="sci-panel" id="sci-panel">
+          <button class="key key-sci" data-action="func" data-value="sin" type="button">sin</button>
+          <button class="key key-sci" data-action="func" data-value="cos" type="button">cos</button>
+          <button class="key key-sci" data-action="func" data-value="tan" type="button">tan</button>
+          <button class="key key-sci" data-action="constant" data-value="pi" type="button">π</button>
+
+          <button class="key key-sci" data-action="func" data-value="log" type="button">log</button>
+          <button class="key key-sci" data-action="func" data-value="ln" type="button">ln</button>
+          <button class="key key-sci" data-action="func" data-value="sqrt" type="button">√</button>
+          <button class="key key-sci" data-action="square" type="button">x²</button>
+
+          <button class="key key-sci" data-action="power" type="button">xʸ</button>
+          <button class="key key-sci" data-action="cube" type="button">x³</button>
+          <button class="key key-sci" data-action="reciprocal" type="button">1/x</button>
+          <button class="key key-sci" data-action="wrap" data-value="abs" type="button">|x|</button>
+
+          <button class="key key-sci" data-action="factorial" type="button">n!</button>
+          <button class="key key-sci" data-action="mod" type="button">mod</button>
+          <button class="key key-sci" data-action="constant" data-value="e" type="button">e</button>
+          <button class="key key-sci" data-action="percent" type="button">%</button>
+
+          <button class="key key-sci" data-action="func" data-value="asin" type="button">sin⁻¹</button>
+          <button class="key key-sci" data-action="func" data-value="acos" type="button">cos⁻¹</button>
+          <button class="key key-sci" data-action="func" data-value="atan" type="button">tan⁻¹</button>
+          <button class="key key-sci key-ans" data-action="ans" type="button">ANS</button>
+        </div>
+
+        <div class="std-grid">
+          <button class="key key-fn key-ac" data-action="clear" type="button" title="Hold to clear history">AC</button>
+          <button class="key key-fn" data-action="backspace" type="button" aria-label="Backspace">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M21 5H8.5L3 12l5.5 7H21a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1z" />
+              <path d="M12.5 9.5l5 5M17.5 9.5l-5 5" />
+            </svg>
+          </button>
+          <button class="key key-fn" data-action="paren" type="button">( )</button>
+          <button class="key key-op" data-action="operator" data-value="/" type="button">÷</button>
+
+          <button class="key key-num" data-action="digit" data-value="7" type="button">7</button>
+          <button class="key key-num" data-action="digit" data-value="8" type="button">8</button>
+          <button class="key key-num" data-action="digit" data-value="9" type="button">9</button>
+          <button class="key key-op" data-action="operator" data-value="*" type="button">×</button>
+
+          <button class="key key-num" data-action="digit" data-value="4" type="button">4</button>
+          <button class="key key-num" data-action="digit" data-value="5" type="button">5</button>
+          <button class="key key-num" data-action="digit" data-value="6" type="button">6</button>
+          <button class="key key-op" data-action="operator" data-value="-" type="button">−</button>
+
+          <button class="key key-num" data-action="digit" data-value="1" type="button">1</button>
+          <button class="key key-num" data-action="digit" data-value="2" type="button">2</button>
+          <button class="key key-num" data-action="digit" data-value="3" type="button">3</button>
+          <button class="key key-op" data-action="operator" data-value="+" type="button">+</button>
+
+          <button class="key key-fn" data-action="sign" type="button">+/−</button>
+          <button class="key key-num" data-action="digit" data-value="0" type="button">0</button>
+          <button class="key key-num" data-action="decimal" type="button">.</button>
+          <button class="key key-eq" data-action="equals" type="button" aria-label="Equals">=</button>
+        </div>
+      </section>
+    </main>
+
+    <!-- history sheet -->
+    <section class="sheet" id="history-sheet" aria-hidden="true" aria-label="History">
+      <div class="sheet-handle"></div>
+      <header class="sheet-header">
+        <span class="sheet-title">History</span>
+        <button class="chip chip--ghost" id="history-copy-all" type="button">Copy all</button>
+      </header>
+      <div class="sheet-body">
+        <div class="history-list" id="history-list"></div>
+      </div>
+      <div class="sheet-actions">
+        <button class="btn btn-danger" id="history-clear" type="button">Clear history</button>
+      </div>
+    </section>
+
+    <!-- settings sheet -->
+    <section class="sheet" id="settings-sheet" aria-hidden="true" aria-label="Settings">
+      <div class="sheet-handle"></div>
+      <header class="sheet-header">
+        <span class="sheet-title">Settings</span>
+      </header>
+      <div class="sheet-body">
+        <div class="row">
+          <div class="row-text">
+            <div class="row-title">Appearance</div>
+            <div class="row-sub">Follows your system by default</div>
+          </div>
+          <div class="segmented" id="theme-seg" role="group" aria-label="Theme">
+            <button type="button" data-value="system" aria-pressed="false">Auto</button>
+            <button type="button" data-value="dark" aria-pressed="false">Dark</button>
+            <button type="button" data-value="light" aria-pressed="false">Light</button>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="row-text">
+            <div class="row-title">Angle unit</div>
+            <div class="row-sub">Applies to sin, cos and tan</div>
+          </div>
+          <div class="segmented" id="angle-seg" role="group" aria-label="Angle unit">
+            <button type="button" data-value="deg" aria-pressed="false">Deg</button>
+            <button type="button" data-value="rad" aria-pressed="false">Rad</button>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="row-text">
+            <div class="row-title">Live preview</div>
+            <div class="row-sub">Show the result while you type</div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="pref-preview" />
+            <span class="switch-track"></span>
+          </label>
+        </div>
+
+        <div class="row">
+          <div class="row-text">
+            <div class="row-title">Thousands separators</div>
+            <div class="row-sub">1,234,567.89 instead of 1234567.89</div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="pref-grouping" />
+            <span class="switch-track"></span>
+          </label>
+        </div>
+
+        <div class="row">
+          <div class="row-text">
+            <div class="row-title">Haptic feedback</div>
+            <div class="row-sub">Short vibration on every key</div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="pref-haptics" />
+            <span class="switch-track"></span>
+          </label>
+        </div>
+
+        <div class="row">
+          <div class="row-text">
+            <div class="row-title">Decimal places</div>
+            <div class="row-sub">Auto keeps up to 12 significant digits</div>
+          </div>
+          <select class="select" id="pref-decimals" aria-label="Decimal places">
+            <option value="auto">Auto</option>
+            <option value="0">0</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="6">6</option>
+            <option value="8">8</option>
+            <option value="10">10</option>
+          </select>
+        </div>
+
+        <div class="row">
+          <div class="row-text">
+            <div class="row-title">Reset app data</div>
+            <div class="row-sub">Clears history, settings and cached rates</div>
+          </div>
+          <button class="chip chip--ghost" id="pref-reset" type="button">Reset</button>
+        </div>
+
+        <div class="about-block">
+          <div class="version-line" id="about-version">version</div>
+          <div>
+            Inspired by <a href="https://nothing.tech" target="_blank" rel="noopener">Nothing OS</a> ·
+            original by <a href="https://github.com/Sednium" target="_blank" rel="noopener">Sednium</a>
+          </div>
+          <div>
+            <a href="https://github.com/AnkushDas4/Nothing-Calculator" target="_blank" rel="noopener">Source</a> ·
+            <a href="https://github.com/AnkushDas4/Nothing-Calculator/releases" target="_blank" rel="noopener"
+              >Releases</a
+            >
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <noscript>
+      <div class="empty-state">N-Calc needs JavaScript to run.</div>
+    </noscript>
+
+    <script src="math.js"></script>
+    <script src="js/version.js"></script>
+    <script src="js/engine.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/app.js"></script>
+  </body>
+</html>

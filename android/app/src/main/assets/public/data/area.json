@@ -1,0 +1,19 @@
+{
+  "id": "area",
+  "title": "Area",
+  "order": 6,
+  "kind": "factor",
+  "base": "Square meter",
+  "units": {
+    "Square meter":      { "symbol": "m²",  "factor": 1 },
+    "Square kilometer":  { "symbol": "km²", "factor": 1000000 },
+    "Square centimeter": { "symbol": "cm²", "factor": 0.0001 },
+    "Square millimeter": { "symbol": "mm²", "factor": 0.000001 },
+    "Hectare":           { "symbol": "ha",  "factor": 10000 },
+    "Acre":              { "symbol": "ac",  "factor": 4046.8564224 },
+    "Square mile":       { "symbol": "mi²", "factor": 2589988.110336 },
+    "Square yard":       { "symbol": "yd²", "factor": 0.83612736 },
+    "Square foot":       { "symbol": "ft²", "factor": 0.09290304 },
+    "Square inch":       { "symbol": "in²", "factor": 0.00064516 }
+  }
+}

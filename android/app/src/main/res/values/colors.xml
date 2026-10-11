@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="nc_background">#0A0A0A</color>
+    <color name="nc_surface">#141414</color>
+    <color name="nc_accent">#FF2D2D</color>
+    <color name="ic_launcher_background">#0A0A0A</color>
+</resources>

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- the WebView paints its own UI; the theme only frames it -->
+    <style name="AppTheme" parent="Theme.AppCompat.DayNight.NoActionBar">
+        <item name="android:windowBackground">@color/nc_background</item>
+        <item name="android:colorAccent">@color/nc_accent</item>
+        <item name="android:statusBarColor">@color/nc_background</item>
+        <item name="android:navigationBarColor">@color/nc_background</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+    </style>
+
+    <!-- splash screen shown while the WebView boots (androidx core-splashscreen) -->
+    <style name="AppTheme.Launch" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/nc_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_logo</item>
+        <item name="windowSplashScreenIconBackgroundColor">@color/nc_background</item>
+        <item name="postSplashScreenTheme">@style/AppTheme</item>
+    </style>
+</resources>

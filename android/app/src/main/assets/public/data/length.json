@@ -1,0 +1,22 @@
+{
+  "id": "length",
+  "title": "Length",
+  "order": 2,
+  "kind": "factor",
+  "base": "Meter",
+  "units": {
+    "Meter":          { "symbol": "m",   "factor": 1 },
+    "Kilometer":      { "symbol": "km",  "factor": 1000 },
+    "Centimeter":     { "symbol": "cm",  "factor": 0.01 },
+    "Millimeter":     { "symbol": "mm",  "factor": 0.001 },
+    "Micrometer":     { "symbol": "µm",  "factor": 0.000001 },
+    "Nanometer":      { "symbol": "nm",  "factor": 0.000000001 },
+    "Mile":           { "symbol": "mi",  "factor": 1609.344 },
+    "Yard":           { "symbol": "yd",  "factor": 0.9144 },
+    "Foot":           { "symbol": "ft",  "factor": 0.3048 },
+    "Inch":           { "symbol": "in",  "factor": 0.0254 },
+    "Nautical mile":  { "symbol": "nmi", "factor": 1852 },
+    "Light year":     { "symbol": "ly",  "factor": 9460730472580800 },
+    "Astronomical unit": { "symbol": "AU", "factor": 149597870700 }
+  }
+}

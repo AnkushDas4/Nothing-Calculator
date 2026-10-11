@@ -1,0 +1,12 @@
+{
+  "id": "temp",
+  "title": "Temp",
+  "order": 9,
+  "kind": "temperature",
+  "base": "Celsius",
+  "units": {
+    "Celsius":    { "symbol": "°C" },
+    "Fahrenheit": { "symbol": "°F" },
+    "Kelvin":     { "symbol": "K"  }
+  }
+}

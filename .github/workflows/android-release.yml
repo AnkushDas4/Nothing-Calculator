@@ -1,0 +1,208 @@
+name: Android Release
+
+# Push a version tag (`git tag v3.0.0 && git push origin v3.0.0`, or run
+# `npm run release`) and this workflow builds a signed release APK with
+# ./gradlew assembleRelease and publishes it as a GitHub release.
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag for the release (e.g. v3.0.0). Defaults to the version in package.json.'
+        required: false
+        type: string
+      publish:
+        description: 'Publish the GitHub release (uncheck to only build the APK artifact)'
+        required: false
+        type: boolean
+        default: true
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build signed APK & publish
+    runs-on: ubuntu-latest
+    steps:
+      - name: Resolve version
+        id: vars
+        run: |
+          set -euo pipefail
+          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            TAG="${GITHUB_REF_NAME}"
+            REF="${GITHUB_REF}"
+          elif [ -n "${{ inputs.tag }}" ]; then
+            TAG="${{ inputs.tag }}"
+            REF="${GITHUB_SHA}"
+          else
+            VERSION=$(node -p "require('./package.json').version")
+            TAG="v${VERSION}"
+            REF="${GITHUB_SHA}"
+          fi
+          if ! printf '%s' "$TAG" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.]+)?$'; then
+            echo "::error::'${TAG}' is not a version tag (expected vX.Y.Z)"
+            exit 1
+          fi
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+          echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
+          echo "ref=${REF}" >> "$GITHUB_OUTPUT"
+          echo "Building ${TAG} from ${REF}"
+
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ steps.vars.outputs.ref }}
+          fetch-depth: 0
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+
+      - name: Install dev dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Stamp version
+        run: |
+          node scripts/set-version.js "${{ steps.vars.outputs.version }}" \
+            --build "${GITHUB_SHA::7}"
+
+      - name: Check generated files, manifest and tests
+        run: |
+          npm run check:data
+          npm run validate
+          npm test
+
+      - name: Sync web app into the Android shell
+        run: node scripts/sync-android.js
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Prepare signing key
+        id: signing
+        env:
+          RELEASE_KEYSTORE_BASE64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
+          RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
+          RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+          RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          store_path="$PWD/android/app/ncalc-release.p12"
+          if [ -n "${RELEASE_KEYSTORE_BASE64}" ]; then
+            echo "→ using the release keystore from repository secrets"
+            printf '%s' "${RELEASE_KEYSTORE_BASE64}" | base64 -d > "$store_path"
+            store_password="${RELEASE_KEYSTORE_PASSWORD}"
+            key_alias="${RELEASE_KEY_ALIAS}"
+            key_password="${RELEASE_KEY_PASSWORD}"
+            echo "signed_with=release" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::RELEASE_KEYSTORE_BASE64 is not set — signing with the shared CI debug key."
+            echo "::warning::See README.md › Releasing to create a real release key."
+            cp android/ci-debug.p12 "$store_path"
+            store_password="android"
+            key_alias="androiddebugkey"
+            key_password="android"
+            echo "signed_with=debug" >> "$GITHUB_OUTPUT"
+          fi
+          keytool -list -keystore "$store_path" -storepass "$store_password" > /dev/null
+          printf 'storeFile=ncalc-release.p12\nstorePassword=%s\nkeyAlias=%s\nkeyPassword=%s\n' \
+            "$store_password" "$key_alias" "$key_password" > android/keystore.properties
+          # android/app/ncalc-release.p12 stays on the runner for Gradle; it is git-ignored
+
+      - name: Gradle assembleRelease
+        working-directory: android
+        run: |
+          # GitHub runs steps with `bash -e`; disable it so the error report below runs
+          set +e -o pipefail
+          ./gradlew --no-daemon --stacktrace assembleRelease 2>&1 | tee gradle.log
+          status=$?
+          if [ $status -ne 0 ]; then
+            grep -nE "What went wrong|Caused by:|FAILURE:|Could not|error:|Unresolved|^\*" gradle.log \
+              | tail -n 30 | sed 's/%/%25/g; s/\r//g' | sed 's/^/::error::/' || true
+            {
+              echo "## Gradle failure log"
+              echo '```'
+              tail -n 200 gradle.log
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit $status
+          fi
+
+      - name: Verify the APK
+        id: apk
+        run: |
+          set -euo pipefail
+          apk=$(find android/app/build/outputs/apk/release -name '*.apk' | head -n 1)
+          if [ -z "$apk" ]; then echo "::error::no APK was produced"; exit 1; fi
+          apksigner=$(ls "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -n 1)
+          "$apksigner" verify --verbose "$apk"
+
+          mkdir -p release
+          cp "$apk" "release/n-calc-${{ steps.vars.outputs.version }}.apk"
+          cp "$apk" release/n-calc-release.apk
+          ls -l release
+          echo "size=$(stat -c%s "$apk")" >> "$GITHUB_OUTPUT"
+          echo "sha256=$(sha256sum "$apk" | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: n-calc-${{ steps.vars.outputs.tag }}-apk
+          path: release/*.apk
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Write release notes
+        env:
+          VERSION: ${{ steps.vars.outputs.version }}
+          TAG: ${{ steps.vars.outputs.tag }}
+          APK_SIZE: ${{ steps.apk.outputs.size }}
+          APK_SHA: ${{ steps.apk.outputs.sha256 }}
+          SIGNED_WITH: ${{ steps.signing.outputs.signed_with }}
+        run: |
+          mkdir -p release
+          node scripts/release-notes.js "$VERSION" "$TAG" "$APK_SIZE" "$APK_SHA" "$SIGNED_WITH" > release/notes.md
+          cat release/notes.md
+
+      - name: Publish GitHub release
+        if: github.event_name == 'push' || inputs.publish
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ steps.vars.outputs.tag }}
+          name: n-calc ${{ steps.vars.outputs.version }}
+          body_path: release/notes.md
+          files: |
+            release/n-calc-${{ steps.vars.outputs.version }}.apk
+            release/n-calc-release.apk
+          draft: false
+          prerelease: ${{ contains(steps.vars.outputs.version, '-') }}
+          fail_on_unmatched_files: true
+          make_latest: ${{ !contains(steps.vars.outputs.version, '-') }}
+
+      - name: Job summary
+        run: |
+          {
+            echo "## n-calc ${{ steps.vars.outputs.version }}"
+            echo ""
+            echo "| item | value |"
+            echo "| --- | --- |"
+            echo "| tag | \`${{ steps.vars.outputs.tag }}\` |"
+            echo "| apk | \`release/n-calc-${{ steps.vars.outputs.version }}.apk\` |"
+            echo "| size | ${{ steps.apk.outputs.size }} bytes |"
+            echo "| sha256 | \`${{ steps.apk.outputs.sha256 }}\` |"
+            echo "| signing key | ${{ steps.signing.outputs.signed_with }} |"
+          } >> "$GITHUB_STEP_SUMMARY"

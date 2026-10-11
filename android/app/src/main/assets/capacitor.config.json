@@ -1,0 +1,13 @@
+{
+  "appId": "com.ankushdas.ncalc",
+  "appName": "n-calc",
+  "webDir": "public",
+  "server": {
+    "androidScheme": "https",
+    "hostname": "ncalc.local"
+  },
+  "android": {
+    "allowMixedContent": false,
+    "backgroundColor": "#0a0a0a"
+  }
+}

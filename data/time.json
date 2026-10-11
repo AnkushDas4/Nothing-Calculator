@@ -1,0 +1,19 @@
+{
+  "id": "time",
+  "title": "Time",
+  "order": 8,
+  "kind": "factor",
+  "base": "Second",
+  "units": {
+    "Nanosecond":  { "symbol": "ns",  "factor": 0.000000001 },
+    "Microsecond": { "symbol": "µs",  "factor": 0.000001 },
+    "Millisecond": { "symbol": "ms",  "factor": 0.001 },
+    "Second":      { "symbol": "s",   "factor": 1 },
+    "Minute":      { "symbol": "min", "factor": 60 },
+    "Hour":        { "symbol": "h",   "factor": 3600 },
+    "Day":         { "symbol": "d",   "factor": 86400 },
+    "Week":        { "symbol": "wk",  "factor": 604800 },
+    "Month":       { "symbol": "mo",  "factor": 2629746 },
+    "Year":        { "symbol": "yr",  "factor": 31556952 }
+  }
+}

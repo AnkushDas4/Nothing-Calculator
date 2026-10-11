@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<full-backup-content>
+    <!-- WebView cache does not need backing up; history/rates live in local storage -->
+    <exclude domain="root" path="app_webview/GPUCache" />
+    <exclude domain="root" path="app_webview/Default/Cache" />
+</full-backup-content>

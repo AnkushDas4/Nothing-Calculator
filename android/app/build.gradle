@@ -1,0 +1,99 @@
+plugins {
+    id 'com.android.application'
+}
+
+def keystorePropertiesFile = rootProject.file('keystore.properties')
+def keystoreProperties = new Properties()
+if (keystorePropertiesFile.exists()) {
+    keystorePropertiesFile.withInputStream { stream -> keystoreProperties.load(stream) }
+}
+
+android {
+    namespace 'com.ankushdas.ncalc'
+    compileSdk rootProject.ext.compileSdkVersion
+
+    defaultConfig {
+        applicationId 'com.ankushdas.ncalc'
+        minSdkVersion rootProject.ext.minSdkVersion
+        targetSdkVersion rootProject.ext.targetSdkVersion
+        versionCode 30000
+        versionName "3.0.0"
+        vectorDrawables.useSupportLibrary = true
+
+        androidResources {
+            // keep dotfiles and VCS noise out of the packaged web app
+            ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
+        }
+    }
+
+    signingConfigs {
+        if (keystorePropertiesFile.exists()) {
+            release {
+                storeFile file(keystoreProperties['storeFile'])
+                storePassword keystoreProperties['storePassword']
+                keyAlias keystoreProperties['keyAlias']
+                keyPassword keystoreProperties['keyPassword']
+                enableV1Signing true
+                enableV2Signing true
+            }
+        }
+    }
+
+    buildTypes {
+        debug {
+            applicationIdSuffix '.debug'
+            versionNameSuffix '-debug'
+        }
+        release {
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            if (keystorePropertiesFile.exists()) {
+                signingConfig signingConfigs.release
+            }
+        }
+    }
+
+    buildFeatures {
+        // AGP 8 disables BuildConfig by default; MainActivity reports its
+        // version through BuildConfig.VERSION_NAME in the WebView user agent
+        buildConfig = true
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    packagingOptions {
+        resources {
+            excludes += ['META-INF/*.kotlin_module', 'DebugProbesKt.bin', 'kotlin-tooling-metadata.json']
+        }
+    }
+
+    lint {
+        abortOnError false
+        checkReleaseBuilds false
+    }
+}
+
+dependencies {
+    implementation "androidx.appcompat:appcompat:$androidxAppCompatVersion"
+    implementation "androidx.core:core:$androidxCoreVersion"
+    implementation "androidx.core:core-splashscreen:$coreSplashScreenVersion"
+    implementation "androidx.webkit:webkit:$androidxWebkitVersion"
+    implementation "androidx.activity:activity:$androidxActivityVersion"
+
+    testImplementation "junit:junit:$junitVersion"
+}
+
+// Convenience: `./gradlew assembleRelease` prints where the APK landed.
+tasks.matching { it.name == 'assembleRelease' }.configureEach {
+    doLast {
+        def apkDir = layout.buildDirectory.dir('outputs/apk/release').get().asFile
+        if (apkDir.exists()) {
+            println "n-calc APK:"
+            apkDir.listFiles().findAll { it.name.endsWith('.apk') }.each { println "  ${it}" }
+        }
+    }
+}

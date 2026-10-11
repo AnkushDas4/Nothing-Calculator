@@ -1,0 +1,11 @@
+// Top-level build file — shared configuration for the n-calc Android shell.
+plugins {
+    id 'com.android.application' version '8.13.0' apply false
+}
+
+// shared SDK / dependency versions, available as rootProject.ext.*
+apply from: 'variables.gradle'
+
+tasks.register('clean', Delete) {
+    delete rootProject.layout.buildDirectory
+}
