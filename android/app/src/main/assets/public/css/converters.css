@@ -487,16 +487,20 @@
 }
 
 /* ── landscape ────────────────────────────────────────────── */
-@media (orientation: landscape) and (max-height: 620px) {
-  .app {
+/* `<html data-layout>` follows the device (or the manual choice made on
+   the calculator page), so the wide layout also works with rotation lock on. */
+@media (min-aspect-ratio: 1/1) and (max-height: 620px) {
+  html[data-layout='landscape'] .app {
     max-width: 100%;
+    padding-left: max(env(safe-area-inset-left), 0px);
+    padding-right: max(env(safe-area-inset-right), 0px);
   }
 
-  .page-head {
+  html[data-layout='landscape'] .page-head {
     padding: 6px 12px 4px;
   }
 
-  .conv-body {
+  html[data-layout='landscape'] .conv-body {
     display: grid;
     grid-template-columns: 1fr 1fr;
     align-content: start;
@@ -504,20 +508,20 @@
     overflow-y: auto;
   }
 
-  .value-card {
+  html[data-layout='landscape'] .value-card {
     grid-column: 1 / -1;
     padding: 8px 14px;
   }
 
-  .value-text {
+  html[data-layout='landscape'] .value-text {
     font-size: 1.5rem;
   }
 
-  .selectors {
+  html[data-layout='landscape'] .selectors {
     grid-column: 1 / -1;
   }
 
-  .conv-keypad {
+  html[data-layout='landscape'] .conv-keypad {
     position: sticky;
     bottom: 0;
     gap: 7px;
@@ -525,7 +529,7 @@
     background: linear-gradient(to top, var(--bg) 70%, transparent);
   }
 
-  .conv-keypad .key {
+  html[data-layout='landscape'] .conv-keypad .key {
     aspect-ratio: auto;
     height: clamp(38px, 9vh, 62px);
     border-radius: 12px;

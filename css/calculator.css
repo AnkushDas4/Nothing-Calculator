@@ -225,95 +225,128 @@
   color: var(--text-dim);
 }
 
-/* ── landscape / tablet ───────────────────────────────────── */
-@media (orientation: landscape) and (max-height: 620px) {
-  .app {
-    display: grid;
-    grid-template-columns: minmax(240px, 36%) 1fr;
-    grid-template-rows: auto 1fr;
+/* ── scientific layout (landscape) ────────────────────────── */
+/* `<html data-layout="landscape">` is set by the head script and by
+   NCUI.layout — it follows the device in `auto` mode and can be flipped
+   by the top-bar button. Portrait-shaped windows stack the scientific
+   panel above the keypad; wide windows park it beside the keypad. */
+
+html[data-layout='landscape'] .app {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, auto) minmax(0, 1fr);
+  grid-template-areas:
+    'topbar'
+    'display'
+    'keypad';
+  max-width: 100%;
+  /* keep the device cutout clear on the left/right edges */
+  padding-left: max(env(safe-area-inset-left), 0px);
+  padding-right: max(env(safe-area-inset-right), 0px);
+  row-gap: 2px;
+}
+
+html[data-layout='landscape'] .topbar {
+  grid-area: topbar;
+  padding: 8px 14px 4px;
+}
+
+html[data-layout='landscape'] .display {
+  grid-area: display;
+  min-height: 76px;
+  max-height: 32vh;
+  overflow: hidden;
+  padding: 4px 22px 8px;
+}
+
+/* the scientific panel and the keypad split the height between them */
+html[data-layout='landscape'] .keypad {
+  grid-area: keypad;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) minmax(0, 1.08fr);
+  gap: 8px;
+  min-height: 0;
+}
+
+/* `sci-collapsed` is set by the fx chip — the keypad defaults to the
+   panel being visible, so the first paint never flashes it away */
+html[data-layout='landscape'] .keypad.sci-collapsed {
+  grid-template-rows: minmax(0, 0fr) minmax(0, 1fr);
+  row-gap: 0;
+}
+
+html[data-layout='landscape'] .sci-panel,
+html[data-layout='landscape'] .std-grid {
+  grid-template-rows: repeat(5, minmax(0, 1fr));
+  min-height: 0;
+}
+
+html[data-layout='landscape'] .sci-panel {
+  max-height: none;
+  opacity: 1;
+  transform: none;
+  margin-bottom: 0;
+  transition: none;
+}
+
+html[data-layout='landscape'] .keypad.sci-collapsed .sci-panel {
+  opacity: 0;
+}
+
+html[data-layout='landscape'] .key {
+  aspect-ratio: auto;
+  height: 100%;
+  min-height: 0;
+}
+
+/* wide windows — real landscape phones, tablets, desktop: two panes */
+@media (min-aspect-ratio: 1/1) {
+  html[data-layout='landscape'] .app {
+    grid-template-columns: minmax(180px, 32%) minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
     grid-template-areas:
-      'topbar keypad'
+      'topbar topbar'
       'display keypad';
-    max-width: 100%;
-    padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
     column-gap: 6px;
   }
 
-  .topbar {
-    grid-area: topbar;
-    padding: 8px 8px 4px 14px;
-  }
-
-  .display {
-    grid-area: display;
+  html[data-layout='landscape'] .display {
+    min-height: 0;
+    max-height: none;
     padding: 4px 16px 12px;
     border-right: 1px solid var(--border);
-    justify-content: flex-end;
   }
 
-  .display-main {
-    font-size: 2.4rem;
-  }
-
-  .keypad {
-    grid-area: keypad;
+  html[data-layout='landscape'] .keypad {
+    display: flex;
     flex-direction: row;
     align-items: stretch;
-    padding: 10px 12px 10px 6px;
     gap: 8px;
+    padding: 10px 12px 10px 6px;
+    /* on very tall windows the keys would stretch — keep them key-shaped */
+    max-height: min(100%, 620px);
+    align-self: center;
+    width: 100%;
   }
 
-  .sci-panel {
-    max-height: none;
-    opacity: 1;
-    transform: none;
+  html[data-layout='landscape'] .sci-panel {
     flex: 1.05;
     height: 100%;
-    margin-bottom: 0;
-  }
-
-  .sci-panel:not(.open) {
-    flex: 0;
-    width: 0;
-    opacity: 0;
     overflow: hidden;
   }
 
-  .std-grid {
+  html[data-layout='landscape'] .keypad.sci-collapsed .sci-panel {
+    flex: 0;
+    width: 0;
+  }
+
+  html[data-layout='landscape'] .std-grid {
     flex: 1;
     height: 100%;
-    grid-auto-rows: 1fr;
+    grid-auto-rows: minmax(0, 1fr);
   }
 
-  .key {
-    aspect-ratio: auto;
-    height: 100%;
-    min-height: 0;
+  html[data-layout='landscape'] .key {
     border-radius: 14px;
-  }
-
-  .history-list {
-    max-height: none;
-  }
-}
-
-@media (orientation: landscape) and (min-height: 620px) {
-  .app {
-    max-width: 720px;
-    padding-top: 18px;
-  }
-
-  .display-main {
-    font-size: 4rem;
-  }
-
-  .sci-panel {
-    max-height: none;
-    opacity: 1;
-    transform: none;
-  }
-
-  .sci-panel:not(.open) {
-    display: none;
   }
 }

@@ -42,6 +42,10 @@ math library, conversion tables) ships inside the APK, so it works offline.
 - **Contextual percent** — `100+10%` → `110`, `100-10%` → `90`, `100*10%` → `10`, `80/10%` → `800`.
 - **Scientific keypad** — `sin cos tan`, `sin⁻¹ cos⁻¹ tan⁻¹`, `log`, `ln`, `√`, `x²`, `x³`, `xʸ`, `1/x`, `|x|`, `n!`, `mod`, `π`, `e`.
 - **DEG / RAD toggle** right in the top bar; trigonometry is degree-based by default.
+- **Two layouts, one tap** — the rotate button in the top bar flips between the clean portrait
+  keypad and the landscape layout with the scientific panel and the DEG / fx chips. `Auto`
+  (the default) follows the device, `Portrait` / `Landscape` override it, which also covers
+  phones with rotation lock turned on. Both choices live in *Settings → Screen layout*.
 - **ANS** recalls the last result, and history entries can be tapped to reuse them.
 - **Smart editing** — implicit multiplication (`2(3+4)`), unary minus, `√` wraps the trailing operand, backspace deletes whole tokens (`sin(` in one tap).
 - **Errors are messages, not crashes** — *Cannot divide by zero*, *Unclosed parenthesis*, *Not a real number*.
@@ -59,6 +63,9 @@ math library, conversion tables) ships inside the APK, so it works offline.
 - Adaptive launcher icon (monochrome layer included) and a Nothing-style splash screen.
 - Haptics on every key via `navigator.vibrate` (toggleable).
 - Theme: auto (follows the system), dark or light — no flash on load.
+- Orientation: the layout follows the device, and the rotate button (or *Settings → Screen
+  layout*) pins it to portrait or landscape, so the scientific keypad stays reachable on
+  phones with rotation lock on. The converter page honours the same choice.
 - Keyboard support on the web, and the Android back button closes sheets / returns to the calculator first.
 - Offline: service worker on the web, bundled assets in the APK.
 

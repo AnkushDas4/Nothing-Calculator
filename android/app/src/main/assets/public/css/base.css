@@ -208,6 +208,7 @@ button {
   align-items: center;
   gap: 8px;
   min-width: 0;
+  overflow: hidden;
 }
 
 .brand-dot {
@@ -225,12 +226,15 @@ button {
   text-transform: uppercase;
   color: var(--text-dim);
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .topbar-actions {
   display: flex;
   align-items: center;
   gap: 4px;
+  flex-shrink: 0;
 }
 
 .icon-btn {
@@ -240,6 +244,8 @@ button {
   display: flex;
   align-items: center;
   justify-content: center;
+  /* never let a tight row squash the tap targets */
+  flex-shrink: 0;
   transition: background var(--speed) ease, transform 0.12s ease;
 }
 
@@ -259,9 +265,15 @@ button {
   fill: var(--text);
 }
 
+/* a manual layout choice is on (instead of following the device) */
+.icon-btn.is-active svg {
+  fill: var(--accent);
+}
+
 .chip {
   height: 30px;
   padding: 0 12px;
+  flex-shrink: 0;
   border-radius: 999px;
   border: 1px solid var(--border-strong);
   background: var(--bg-elevated);
@@ -294,6 +306,19 @@ button {
   background: var(--accent-soft);
   border-color: var(--accent);
   box-shadow: none;
+}
+
+/* ── layout switched controls ─────────────────────────────── */
+/* DEG and fx only drive the scientific layout, so the portrait
+   screen stays a plain calculator. `<html data-layout>` is set by
+   the inline head script (+ NCUI.layout) before the first paint. */
+
+html[data-layout='portrait'] .sci-only {
+  display: none;
+}
+
+html[data-layout='portrait'] .sci-panel {
+  display: none !important;
 }
 
 /* ── keys ──────────────────────────────────────────────────── */
@@ -451,6 +476,8 @@ button {
   border-radius: 999px;
   padding: 3px;
   gap: 2px;
+  /* let the label next to it wrap instead of squashing the options */
+  flex-shrink: 0;
 }
 
 .segmented button {

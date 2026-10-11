@@ -27,7 +27,7 @@ const SCRIPTS = {
   ],
 };
 
-async function boot(page) {
+async function boot(page, seed) {
   const html = fs.readFileSync(path.join(ROOT, page), 'utf8');
   const dom = new JSDOM(html, {
     url: 'http://localhost:8080/' + page,
@@ -35,6 +35,9 @@ async function boot(page) {
     pretendToBeVisual: true,
   });
   const { window } = dom;
+
+  // seed stored preferences before the page scripts boot
+  if (seed) Object.keys(seed).forEach((key) => window.localStorage.setItem(key, seed[key]));
 
   window.matchMedia = (query) => ({
     matches: /landscape/.test(query),
@@ -136,6 +139,50 @@ test('calculator: angle chip switches degrees and radians', async () => {
   click(window, '.key[data-action="paren"]');
   click(window, '.key[data-action="equals"]');
   assert.equal(text(window, '#main-line'), '1');
+});
+
+test('calculator: layout button flips between portrait and landscape', async () => {
+  const { window } = await boot('index.html');
+  const root = window.document.documentElement;
+  // the media stub reports a landscape device, so `auto` renders landscape
+  assert.equal(root.getAttribute('data-layout'), 'landscape');
+  assert.ok(!window.document.querySelector('#keypad').classList.contains('sci-collapsed'));
+
+  click(window, '#layout-btn');
+  assert.equal(root.getAttribute('data-layout'), 'portrait');
+  assert.equal(window.localStorage.getItem('ncalc.layout'), '"portrait"');
+  assert.equal(window.document.querySelector('#layout-btn').getAttribute('aria-pressed'), 'true');
+  assert.ok(!window.document.querySelector('#sci-panel').classList.contains('open'));
+  assert.ok(!window.document.querySelector('#keypad').classList.contains('sci-open'));
+
+  click(window, '#layout-btn');
+  assert.equal(root.getAttribute('data-layout'), 'landscape');
+  assert.ok(!window.document.querySelector('#keypad').classList.contains('sci-collapsed'));
+});
+
+test('calculator: a manual layout overrides the device and auto gives it back', async () => {
+  const { window } = await boot('index.html', { 'ncalc.layout': '"portrait"' });
+  assert.equal(window.document.documentElement.getAttribute('data-layout'), 'portrait');
+
+  click(window, '#settings-btn');
+  assert.equal(
+    window.document.querySelector('#layout-seg [data-value="portrait"]').getAttribute('aria-pressed'),
+    'true',
+  );
+
+  click(window, '#layout-seg [data-value="auto"]');
+  assert.equal(window.document.documentElement.getAttribute('data-layout'), 'landscape');
+  assert.equal(window.document.querySelector('#layout-btn').getAttribute('aria-pressed'), 'false');
+});
+
+test('calculator: fx chip collapses the scientific panel in landscape', async () => {
+  const { window } = await boot('index.html');
+  click(window, '#sci-chip');
+  assert.ok(!window.document.querySelector('#sci-panel').classList.contains('open'));
+  assert.ok(window.document.querySelector('#keypad').classList.contains('sci-collapsed'));
+  click(window, '#sci-chip');
+  assert.ok(window.document.querySelector('#sci-panel').classList.contains('open'));
+  assert.ok(!window.document.querySelector('#keypad').classList.contains('sci-collapsed'));
 });
 
 test('calculator: scientific keys wrap the trailing operand', async () => {

@@ -599,6 +599,7 @@
   function boot() {
     UI.prefs.load();
     UI.theme.apply();
+    UI.layout.apply();
     UI.sheets.init();
     loadSelections();
     loadCachedRates();
@@ -668,6 +669,9 @@
     document.addEventListener('visibilitychange', () => {
       if (!document.hidden) ensureRates(false);
     });
+
+    // the layout preference is shared with the calculator page
+    UI.layout.watch();
 
     UI.enterAnimation('back');
     if (categoryId === 'currency') ensureRates(false);

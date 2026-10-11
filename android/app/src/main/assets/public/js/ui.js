@@ -56,7 +56,7 @@
     decimals: 'auto', // auto | 0 … 10
     angle: 'deg', // deg | rad
     preview: true,
-    sciPortrait: false,
+    layout: 'auto', // auto | portrait | landscape
     seenIntro: false,
   };
 
@@ -114,6 +114,73 @@
       if (preferences.theme === 'system') theme.apply('system');
     });
   }
+
+  /* ── layout orientation ───────────────────────────────────── */
+
+  /* The app ships two layouts: 'portrait' (single column, basic keypad)
+     and 'landscape' (scientific panel beside or above the keypad).
+     `auto` follows the device, a manual choice overrides it — so the
+     layout can also be flipped on devices with rotation lock on. */
+
+  const LAYOUT_MODES = ['auto', 'portrait', 'landscape'];
+  const landscapeMedia = global.matchMedia ? global.matchMedia('(orientation: landscape)') : null;
+
+  function layoutMode() {
+    const mode = preferences.layout;
+    return LAYOUT_MODES.indexOf(mode) >= 0 ? mode : 'auto';
+  }
+
+  function deviceIsLandscape() {
+    if (landscapeMedia) return landscapeMedia.matches;
+    if (global.innerWidth && global.innerHeight) return global.innerWidth > global.innerHeight;
+    return false;
+  }
+
+  /** What the app should render right now: 'portrait' or 'landscape'. */
+  function effectiveLayout() {
+    const mode = layoutMode();
+    return mode === 'auto' ? (deviceIsLandscape() ? 'landscape' : 'portrait') : mode;
+  }
+
+  /** Mirrors the layout onto <html> — CSS keys every landscape rule off it. */
+  function applyLayout() {
+    const root = document.documentElement;
+    const effective = effectiveLayout();
+    root.setAttribute('data-layout', effective);
+    root.setAttribute('data-layout-mode', layoutMode());
+    return effective;
+  }
+
+  const layout = {
+    modes: LAYOUT_MODES,
+    mode: layoutMode,
+    effective: effectiveLayout,
+    isForced() {
+      return layoutMode() !== 'auto';
+    },
+    apply: applyLayout,
+    set(mode) {
+      savePreference('layout', LAYOUT_MODES.indexOf(mode) >= 0 ? mode : 'auto');
+      applyLayout();
+      return layoutMode();
+    },
+    /** Flip to the opposite of what is on screen right now. */
+    toggle() {
+      return layout.set(effectiveLayout() === 'landscape' ? 'portrait' : 'landscape');
+    },
+    /** Re-applies the layout on rotation (or resize), then runs `handler`. */
+    watch(handler) {
+      const notify = () => {
+        applyLayout();
+        if (handler) handler();
+      };
+      if (landscapeMedia) {
+        if (landscapeMedia.addEventListener) landscapeMedia.addEventListener('change', notify);
+        else if (landscapeMedia.addListener) landscapeMedia.addListener(notify);
+      }
+      if (global.addEventListener) global.addEventListener('resize', notify);
+    },
+  };
 
   /* ── haptics ──────────────────────────────────────────────── */
 
@@ -494,6 +561,7 @@
       },
     },
     theme,
+    layout,
     haptics,
     toast,
     copy,

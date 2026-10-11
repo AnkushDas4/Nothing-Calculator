@@ -27,6 +27,21 @@
         } catch (err) {
           document.documentElement.setAttribute('data-theme', 'dark');
         }
+        try {
+          /* 'auto' follows the device, anything else is a manual choice */
+          var rawLayout = localStorage.getItem('ncalc.layout');
+          var layout = rawLayout ? JSON.parse(rawLayout) : 'auto';
+          if (layout !== 'portrait' && layout !== 'landscape') layout = 'auto';
+          var landscape = !window.matchMedia || window.matchMedia('(orientation: landscape)').matches;
+          document.documentElement.setAttribute(
+            'data-layout',
+            layout === 'auto' ? (landscape ? 'landscape' : 'portrait') : layout,
+          );
+          document.documentElement.setAttribute('data-layout-mode', layout);
+        } catch (err) {
+          document.documentElement.setAttribute('data-layout', 'portrait');
+          document.documentElement.setAttribute('data-layout-mode', 'auto');
+        }
       })();
     </script>
   </head>

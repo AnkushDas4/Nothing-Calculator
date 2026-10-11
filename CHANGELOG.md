@@ -3,6 +3,38 @@
 All notable changes to n-calc are documented here. This project follows
 [Semantic Versioning](https://semver.org/) and releases are published from Git tags.
 
+## [Unreleased]
+
+### Added
+
+- **Orientation button** (`#layout-btn`) in the top bar: flips the app between the portrait
+  and landscape layouts on tap, plus a *Settings → Screen layout* row (`Auto` / `Portrait` /
+  `Landscape`). The choice is stored in `ncalc.layout` and applied before the first paint.
+  `auto` still follows the device; a manual choice also works with rotation lock on.
+- `NCUI.layout` (`mode` / `effective` / `set` / `toggle` / `watch` / `apply`) drives the new
+  `<html data-layout>` / `<html data-layout-mode>` attributes that every landscape style
+  keys off — the converter page shares the same preference.
+- DOM tests for the layout flip, the manual override and the `fx` panel toggle.
+
+### Changed
+
+- **Portrait is now the basic keypad**: `DEG` and `fx` (`.sci-only`) and the scientific panel
+  live in the landscape layout only, so the portrait screen keeps its 5×4 grid. The old
+  `sciPortrait` preference is gone (it made the keypad overflow on short screens).
+- The landscape layout is no longer driven by `@media (orientation: landscape)`: portrait-shaped
+  windows stack the scientific panel above the keypad, wide windows park it beside the keypad.
+- The top bar spans the full width in landscape instead of being squeezed into the 36% display
+  column, and its buttons keep their tap size (`flex-shrink: 0`) while the brand name truncates.
+
+### Fixed
+
+- The `DEG` / `fx` chips are no longer squashed, clipped or hidden behind the keypad in
+  landscape (the old left column was ~240px but the row needed ~330px).
+- Scientific keys no longer collapse to text height in landscape — rows share the height
+  (`minmax(0, 1fr)`, `height: 100%`) in both layouts.
+- Landscape keeps the Android status-bar padding and respects the left/right display-cutout
+  insets instead of resetting the page padding to `env(safe-area-inset-*)`.
+
 ## [3.0.0] — 2026-10-11
 
 The first release with a real engine, a converter that works offline and an automated

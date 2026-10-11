@@ -16,7 +16,7 @@
   let evaluated = null; // { value, expr } — set right after "="
   let errorMsg = null;
   let history = [];
-  let landscapeSci = true; // ephemeral: scientific keys in landscape
+  let landscapeSci = true; // ephemeral: scientific keys while in the landscape layout
 
   const HISTORY_KEY = 'history';
   const HISTORY_LIMIT = 120;
@@ -35,6 +35,8 @@
     sciPanel: $('sci-panel'),
     sciChip: $('sci-chip'),
     angleChip: $('angle-chip'),
+    layoutBtn: $('layout-btn'),
+    layoutSeg: $('layout-seg'),
     converterBtn: $('converter-btn'),
     historyBtn: $('history-btn'),
     settingsBtn: $('settings-btn'),
@@ -461,17 +463,29 @@
     });
   }
 
+  /** The scientific keypad only exists in the landscape layout. */
   function syncSciPanel() {
-    const landscape = window.matchMedia('(orientation: landscape)').matches;
-    const open = landscape ? landscapeSci : UI.prefs.all.sciPortrait === true;
+    const open = UI.layout.effective() === 'landscape' && landscapeSci;
     el.sciPanel.classList.toggle('open', open);
+    el.keypad.classList.toggle('sci-collapsed', !open);
     el.sciChip.setAttribute('aria-pressed', String(open));
+  }
+
+  function syncLayoutUi() {
+    const landscape = UI.layout.effective() === 'landscape';
+    const label = landscape ? 'Switch to portrait layout' : 'Switch to landscape layout';
+    el.layoutBtn.setAttribute('aria-label', label);
+    el.layoutBtn.title = label + (UI.layout.isForced() ? ' · manual override' : '');
+    el.layoutBtn.setAttribute('aria-pressed', String(UI.layout.isForced()));
+    el.layoutBtn.classList.toggle('is-active', UI.layout.isForced());
+    syncSegmented(el.layoutSeg, UI.layout.mode());
   }
 
   function syncSettingsUi() {
     const prefs = UI.prefs.all;
     syncSegmented(el.themeSeg, prefs.theme);
     syncSegmented(el.angleSeg, prefs.angle);
+    syncSegmented(el.layoutSeg, UI.layout.mode());
     el.prefPreview.checked = prefs.preview !== false;
     el.prefGrouping.checked = prefs.grouping !== false;
     el.prefHaptics.checked = prefs.haptics !== false;
@@ -540,10 +554,12 @@
   function boot() {
     UI.prefs.load();
     UI.theme.apply();
+    UI.layout.apply();
     UI.sheets.init();
     loadHistory();
     renderHistory();
     syncAngleUi();
+    syncLayoutUi();
     syncSettingsUi();
 
     el.keypad.addEventListener('click', onKeypadClick);
@@ -562,11 +578,27 @@
       syncSettingsUi();
       UI.sheets.open('settings-sheet');
     });
+    el.layoutBtn.addEventListener('click', () => {
+      UI.haptics.tap();
+      UI.layout.toggle();
+      syncLayoutUi();
+      syncSciPanel();
+      render();
+      const landscape = UI.layout.effective() === 'landscape';
+      UI.toast(landscape ? 'Landscape layout' : 'Portrait layout');
+    });
+    el.layoutSeg.addEventListener('click', (event) => {
+      const button = event.target.closest('button');
+      if (!button) return;
+      UI.haptics.tap();
+      UI.layout.set(button.dataset.value);
+      syncLayoutUi();
+      syncSciPanel();
+      render();
+    });
     el.sciChip.addEventListener('click', () => {
       UI.haptics.tap();
-      const landscape = window.matchMedia('(orientation: landscape)').matches;
-      if (landscape) landscapeSci = !landscapeSci;
-      else UI.prefs.set('sciPortrait', !(UI.prefs.all.sciPortrait === true));
+      landscapeSci = !landscapeSci;
       syncSciPanel();
     });
     el.angleChip.addEventListener('click', () => {
@@ -582,7 +614,11 @@
     const acKey = el.keypad.querySelector('[data-action="clear"]');
     if (acKey) wireLongPress(acKey, clearHistory, 650);
 
-    window.matchMedia('(orientation: landscape)').addEventListener('change', syncSciPanel);
+    UI.layout.watch(() => {
+      syncLayoutUi();
+      syncSciPanel();
+      render();
+    });
 
     UI.bindKeyboard(onKeyboard);
     window.addEventListener('beforeunload', () => {

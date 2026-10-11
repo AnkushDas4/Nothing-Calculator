@@ -18,7 +18,7 @@
     <link rel="stylesheet" href="css/base.css" />
     <link rel="stylesheet" href="css/calculator.css" />
     <script>
-      /* applied before first paint so there is never a theme flash */
+      /* applied before first paint so there is never a theme or layout flash */
       (function () {
         try {
           var raw = localStorage.getItem('ncalc.theme');
@@ -31,6 +31,21 @@
           document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
         } catch (err) {
           document.documentElement.setAttribute('data-theme', 'dark');
+        }
+        try {
+          /* 'auto' follows the device, anything else is a manual choice */
+          var rawLayout = localStorage.getItem('ncalc.layout');
+          var layout = rawLayout ? JSON.parse(rawLayout) : 'auto';
+          if (layout !== 'portrait' && layout !== 'landscape') layout = 'auto';
+          var landscape = !window.matchMedia || window.matchMedia('(orientation: landscape)').matches;
+          document.documentElement.setAttribute(
+            'data-layout',
+            layout === 'auto' ? (landscape ? 'landscape' : 'portrait') : layout,
+          );
+          document.documentElement.setAttribute('data-layout-mode', layout);
+        } catch (err) {
+          document.documentElement.setAttribute('data-layout', 'portrait');
+          document.documentElement.setAttribute('data-layout-mode', 'auto');
         }
       })();
     </script>
@@ -53,10 +68,36 @@
               />
             </svg>
           </button>
-          <button class="chip" id="angle-chip" type="button" aria-pressed="false" title="Toggle degrees / radians">
+          <button
+            class="icon-btn"
+            id="layout-btn"
+            type="button"
+            aria-label="Switch to landscape layout"
+            aria-pressed="false"
+            title="Portrait or landscape layout"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="M16.48 2.52c3.27 1.55 5.61 4.72 5.97 8.48h1.5C23.44 4.84 18.29 0 12 0l-.66.03 3.81 3.81 1.33-1.32zm-6.25-.77c-.59-.59-1.54-.59-2.12 0L1.75 8.11c-.59.59-.59 1.54 0 2.12l12.02 12.02c.59.59 1.54.59 2.12 0l6.36-6.36c.59-.59.59-1.54 0-2.12L10.23 1.75zm4.6 19.44L2.81 9.17l6.36-6.36 12.02 12.02-6.36 6.36zm-7.31.29C4.25 19.94 1.91 16.76 1.55 13H.05C.56 19.16 5.71 24 12 24l.66-.03-3.81-3.81-1.33 1.32z"
+              />
+            </svg>
+          </button>
+          <button
+            class="chip sci-only"
+            id="angle-chip"
+            type="button"
+            aria-pressed="false"
+            title="Toggle degrees / radians"
+          >
             DEG
           </button>
-          <button class="chip chip--ghost" id="sci-chip" type="button" aria-pressed="false" title="Scientific keys">
+          <button
+            class="chip chip--ghost sci-only"
+            id="sci-chip"
+            type="button"
+            aria-pressed="false"
+            title="Scientific keys"
+          >
             fx
           </button>
           <button class="icon-btn" id="history-btn" type="button" aria-label="History" title="History">
@@ -192,6 +233,18 @@
           <div class="segmented" id="angle-seg" role="group" aria-label="Angle unit">
             <button type="button" data-value="deg" aria-pressed="false">Deg</button>
             <button type="button" data-value="rad" aria-pressed="false">Rad</button>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="row-text">
+            <div class="row-title">Screen layout</div>
+            <div class="row-sub">Portrait keeps the basic keypad, landscape adds the scientific keys</div>
+          </div>
+          <div class="segmented" id="layout-seg" role="group" aria-label="Screen layout">
+            <button type="button" data-value="auto" aria-pressed="false">Auto</button>
+            <button type="button" data-value="portrait" aria-pressed="false">Portrait</button>
+            <button type="button" data-value="landscape" aria-pressed="false">Landscape</button>
           </div>
         </div>
 

@@ -18,7 +18,7 @@ const HIGHLIGHTS = [
   'Live result preview while you type, plus calculator-style percent maths (`100+10%` = 110)',
   'Scientific keypad: trig and inverse trig, log/ln, x², x³, xʸ, 1/x, |x|, n!, mod, π, e and ANS',
   'Degree/radian switching, configurable decimals, thousands separators, haptics and preview toggles',
-  'Landscape layout parks the scientific panel next to the keypad; portrait keeps a clean 5×4 grid',
+  'Rotate button (and Settings) flips between the clean portrait keypad and the landscape layout with the scientific panel',
   'Converter with 161 currencies (offline fallback) and length, mass, speed, volume, area, data, time, temperature',
   'Keyboard support, tap-to-copy, searchable history, installable PWA',
   'Offline-first: everything ships inside the APK — no CDN, no telemetry',
