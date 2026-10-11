@@ -112,6 +112,75 @@ function checkVersion() {
   }
 }
 
+function checkAndroid() {
+  const required = [
+    'android/settings.gradle',
+    'android/build.gradle',
+    'android/variables.gradle',
+    'android/gradle.properties',
+    'android/gradlew',
+    'android/gradle/wrapper/gradle-wrapper.jar',
+    'android/gradle/wrapper/gradle-wrapper.properties',
+    'android/app/build.gradle',
+    'android/app/proguard-rules.pro',
+    'android/app/src/main/AndroidManifest.xml',
+    'android/app/src/main/assets/capacitor.config.json',
+    'android/app/src/main/assets/public/index.html',
+    'android/app/src/main/assets/public/converters.html',
+    'android/app/src/main/java/com/ankushdas/ncalc/MainActivity.java',
+    'android/app/src/main/res/values/styles.xml',
+    'android/app/src/main/res/values/strings.xml',
+    'android/app/src/main/res/layout/activity_main.xml',
+    'android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml',
+    'android/ci-debug.p12',
+  ];
+  required.forEach((file) => {
+    if (!exists(file)) problems.push('android: missing ' + file);
+  });
+
+  if (exists('android/gradlew')) {
+    const mode = fs.statSync(path.join(ROOT, 'android/gradlew')).mode;
+    if (!(mode & 0o111)) problems.push('android/gradlew is not executable (chmod +x)');
+  }
+
+  if (exists('android/gradle/wrapper/gradle-wrapper.properties')) {
+    const props = read('android/gradle/wrapper/gradle-wrapper.properties');
+    if (!/distributionUrl=.*gradle-\d+\.\d+(\.\d+)?-(bin|all)\.zip/.test(props)) {
+      problems.push('gradle-wrapper.properties has no usable distributionUrl');
+    }
+  }
+
+  if (exists('android/app/build.gradle')) {
+    const gradle = read('android/app/build.gradle');
+    ['versionCode', 'versionName', 'applicationId'].forEach((key) => {
+      if (!gradle.includes(key)) problems.push('android/app/build.gradle is missing ' + key);
+    });
+    if (gradle.includes("apply from: '../variables.gradle'") && !read('android/build.gradle').includes('variables.gradle')) {
+      problems.push('variables.gradle is applied to the app project but read through rootProject.ext');
+    }
+  }
+
+  if (exists('android/app/src/main/AndroidManifest.xml')) {
+    const manifest = read('android/app/src/main/AndroidManifest.xml');
+    if (!/android:name="\.MainActivity"/.test(manifest)) problems.push('manifest does not declare .MainActivity');
+    if (!/VIBRATE/.test(manifest)) problems.push('manifest is missing the VIBRATE permission used by haptics');
+  }
+
+  // the packaged web assets must match the sources
+  const assets = path.join(ROOT, 'android', 'app', 'src', 'main', 'assets', 'public');
+  ['index.html', 'converters.html', 'js/app.js', 'js/engine.js', 'css/base.css', 'math.js'].forEach((file) => {
+    const source = path.join(ROOT, file);
+    const copy = path.join(assets, file);
+    if (!fs.existsSync(copy)) {
+      problems.push('android assets: ' + file + ' was never synced (run npm run android:sync)');
+      return;
+    }
+    if (!fs.readFileSync(source).equals(fs.readFileSync(copy))) {
+      problems.push('android assets: ' + file + ' is out of date (run npm run android:sync)');
+    }
+  });
+}
+
 function checkData() {
   const generated = read('js/units-data.js');
   if (!/currencyNames/.test(generated) || !/categories/.test(generated)) {
@@ -119,7 +188,7 @@ function checkData() {
   }
 }
 
-[checkAssets, checkManifest, checkPages, checkVersion, checkData].forEach((check) => check());
+[checkAssets, checkManifest, checkPages, checkVersion, checkData, checkAndroid].forEach((check) => check());
 
 if (problems.length) {
   console.error('✖ validation failed');

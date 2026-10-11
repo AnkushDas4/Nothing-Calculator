@@ -2,8 +2,6 @@ plugins {
     id 'com.android.application'
 }
 
-apply from: '../variables.gradle'
-
 def keystorePropertiesFile = rootProject.file('keystore.properties')
 def keystoreProperties = new Properties()
 if (keystorePropertiesFile.exists()) {
